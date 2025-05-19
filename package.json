@@ -1,0 +1,14 @@
+{
+  "name": "crypto-trading-bot-node",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.98.2",
+    "bs58": "^6.0.0",
+    "dotenv": "^16.5.0"
+  }
+}
