@@ -10,7 +10,6 @@ const PUMPFUN_PROGRAM_ID = new PublicKey('6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uB
 const connection = new Connection(RPC_ENDPOINT, 'confirmed');
 
 const USE_ADVANCED_EXIT_STRATEGY = true; // Toggle for enhanced decision logic
-const USE_ADVANCED_EXIT_STRATEGY_V2 = true; // Toggle for v2 exit strategy
 
 // Utility: Delay function
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -35,32 +34,6 @@ async function analyzePriceAction() {
         maxPriceAchievedPct: Math.floor(Math.random() * 500),
         timeAtMaxPriceSec: Math.floor(Math.random() * 300),
     };
-}
-
-// Advanced Exit Strategy v2 (2025-05-20)
-// Features:
-// ✅ Dynamic Hold Time Based on Buyer Count
-// ✅ Max Price Drop Check After Spike (simulated)
-function determineExitStrategyV2(maxPriceAchievedPct, timeAtMaxPriceSec, buyers5m, priceDropFromPeakPct) {
-    if (!USE_ADVANCED_EXIT_STRATEGY_V2) {
-        // Fallback to original advanced logic
-        if (maxPriceAchievedPct >= 200 && timeAtMaxPriceSec >= 60) return 'Moonshot (Win)';
-        else return 'Partial Exit (Win)';
-    }
-
-    // Dynamic hold time based on confidence level
-    let requiredHoldTime = 90;
-    if (buyers5m > 100) requiredHoldTime = 30;
-    else if (buyers5m > 50) requiredHoldTime = 60;
-
-    // Check for decay from peak
-    if (maxPriceAchievedPct >= 200) {
-        if (priceDropFromPeakPct >= 30) return 'Partial Exit (Win)'; // Exit early on sharp drop
-        if (timeAtMaxPriceSec >= requiredHoldTime) return 'Moonshot (Win)';
-        return 'Partial Exit (Win)';
-    }
-
-    return 'Partial Exit (Win)';
 }
 
 // Fetch Token Launches with Extended Metrics and Running Total
@@ -96,7 +69,6 @@ async function fetchTokenLaunches(targetCount = 500) {
                 const initialLiquidity = await extractInitialLiquidity();
                 const buyerActivity = await analyzeBuyerActivity();
                 const priceAction = await analyzePriceAction();
-                const simulatedPriceDrop = Math.floor(Math.random() * 40); // Simulated placeholder
 
                 // Apply Smart Entry/Exit and Position Sizing
                 const SOL_PRICE_USD = 175.00;
@@ -116,17 +88,13 @@ async function fetchTokenLaunches(targetCount = 500) {
                     const longEnoughAtPeak = priceAction.timeAtMaxPriceSec >= 60;
 
                     if (USE_ADVANCED_EXIT_STRATEGY) {
-                        const tradeDecision = determineExitStrategyV2(
-                            priceAction.maxPriceAchievedPct,
-                            priceAction.timeAtMaxPriceSec,
-                            buyerActivity.buyers5m,
-                            simulatedPriceDrop
-                        );
-
-                        tradeResult = tradeDecision;
-                        profitSOL = (tradeResult === 'Moonshot (Win)')
-                            ? buyIn * (MOONSHOT_PROFIT_PCT / 100)
-                            : buyIn * (EARLY_EXIT_PROFIT_PCT / 100);
+                        if (isMoonshot && longEnoughAtPeak) {
+                            profitSOL = buyIn * (MOONSHOT_PROFIT_PCT / 100);
+                            tradeResult = "Moonshot (Win)";
+                        } else {
+                            profitSOL = buyIn * (EARLY_EXIT_PROFIT_PCT / 100);
+                            tradeResult = "Partial Exit (Win)";
+                        }
                     } else {
                         if (isHighBuyerMomentum) {
                             if (isMoonshot) {
@@ -155,7 +123,6 @@ async function fetchTokenLaunches(targetCount = 500) {
                     Buyers5m: buyerActivity.buyers5m,
                     MaxPriceAchievedPct: priceAction.maxPriceAchievedPct,
                     TimeAtMaxPriceSec: priceAction.timeAtMaxPriceSec,
-                    PriceDropFromPeakPct: simulatedPriceDrop,
                     TradeResult: tradeResult,
                     Profit_SOL: profitSOL,
                     RunningTotal_SOL: runningTotalSOL
@@ -179,10 +146,10 @@ function saveResultsToCSV(data) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `runs/pumpfun_launches_${timestamp}.csv`;
 
-    const header = 'Signature,CreatorWallet,LaunchTimestamp,InitialLiquidity,Buyers10s,Buyers30s,Buyers5m,MaxPriceAchievedPct,TimeAtMaxPriceSec,PriceDropFromPeakPct,TradeResult,Profit_SOL,RunningTotal_SOL\n';
+    const header = 'Signature,CreatorWallet,LaunchTimestamp,InitialLiquidity,Buyers10s,Buyers30s,Buyers5m,MaxPriceAchievedPct,TimeAtMaxPriceSec,TradeResult,Profit_SOL,RunningTotal_SOL\n';
     const rows = data
         .map(row =>
-            `${row.Signature},${row.CreatorWallet},${row.LaunchTimestamp},${row.InitialLiquidity},${row.Buyers10s},${row.Buyers30s},${row.Buyers5m},${row.MaxPriceAchievedPct},${row.TimeAtMaxPriceSec},${row.PriceDropFromPeakPct},${row.TradeResult},${row.Profit_SOL},${row.RunningTotal_SOL}`
+            `${row.Signature},${row.CreatorWallet},${row.LaunchTimestamp},${row.InitialLiquidity},${row.Buyers10s},${row.Buyers30s},${row.Buyers5m},${row.MaxPriceAchievedPct},${row.TimeAtMaxPriceSec},${row.TradeResult},${row.Profit_SOL},${row.RunningTotal_SOL}`
         )
         .join('\n');
     fs.mkdirSync('runs', { recursive: true });
@@ -204,4 +171,12 @@ function saveResultsToCSV(data) {
 }
 
 // Run the Analyzer
-fetchTokenLaunches(500);
+fetchTokenLaunches(500)
+function getSlippage(tradeResult) {
+    if (tradeResult === 'Moonshot (Win)') return Math.random() * 0.02; // 0–2%
+    if (tradeResult === 'Partial Exit (Win)') return 0.02 + Math.random() * 0.03; // 2–5%
+    return 0.05 + Math.random() * 0.10; // 5–15%
+}
+
+
+;
