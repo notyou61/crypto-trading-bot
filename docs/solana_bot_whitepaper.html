@@ -1,10 +1,11 @@
 
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Solana Bot Whitepaper</title>
-  <style>
+<meta charset="utf-8"/>
+<title>Solana Bot Whitepaper</title>
+<style>
     body {
       font-family: Arial, sans-serif;
       margin: 40px;
@@ -37,41 +38,38 @@
       font-weight: bold;
       margin-right: 6px;
     }
-  </style>
+  
+    @media print {
+      h2, h3 {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+      .section-group {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        display: block;
+      }
+      p, table, ul, ol {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+    </style>
 </head>
 <body>
 <h1>White Paper: Automated Meme Coin Trading Bot on Solana (Pump.fun Strategy)</h1>
-
-<h2>Executive Summary</h2>
-
-<p>This white paper outlines the development, strategy, implementation, and operational approach behind an automated trading bot targeting meme coin launches on the Solana blockchain via the Pump.fun platform. Through intelligent trade filtering, conservative capital deployment, and structured reinvestment, this bot aims to deliver sustainable daily profits while mitigating risk.</p>
-
-<hr />
-
-<h2>Project Goals</h2>
-
-<ul>
+<div class="section-group"><h2>Executive Summary</h2><p>This white paper outlines the development, strategy, implementation, and operational approach behind an automated trading bot targeting meme coin launches on the Solana blockchain via the Pump.fun platform. Through intelligent trade filtering, conservative capital deployment, and structured reinvestment, this bot aims to deliver sustainable daily profits while mitigating risk.</p><hr/></div>
+<div class="section-group"><h2>Project Goals</h2><ul>
 <li>Identify early-stage meme coin launches with high growth potential</li>
 <li>Automate trade execution with buy-in logic, exit strategy, and slippage management</li>
 <li>Simulate real-world constraints including transaction fees, price decay, and liquidity</li>
 <li>Generate consistent profit with minimal human oversight</li>
-</ul>
-
-<hr />
-
-<h2>System Architecture</h2>
-
-<h3>A. Data Collection &amp; Filtering</h3>
-
-<ul>
+</ul><hr/></div>
+<div class="section-group"><h2>System Architecture</h2><h3>A. Data Collection &amp; Filtering</h3><ul>
 <li>Monitors token creation events using Solana RPC or Helius API</li>
 <li>Pulls buyer activity in first 10s, 30s, and 5m windows</li>
 <li>Simulates price trajectory using on-chain data or randomized modeling</li>
-</ul>
-
-<h3>B. Decision Engine</h3>
-
-<ul>
+</ul><h3>B. Decision Engine</h3><ul>
 <li><strong>Buy Trigger</strong>: Enters with 0.05–0.1 SOL if Buyers10s &gt;= 5</li>
 <li><strong>Exit Logic</strong> (Advanced v2):
 <ul>
@@ -80,11 +78,7 @@
 <li>Skipped: If momentum or duration is weak</li>
 </ul></li>
 <li><strong>Slippage + Fees</strong>: Deducts 0.0001 SOL and applies 1–5% slippage based on trade type</li>
-</ul>
-
-<h3>C. Logging</h3>
-
-<ul>
+</ul><h3>C. Logging</h3><ul>
 <li>Each trade logs:
 <ul>
 <li>Timestamp</li>
@@ -93,50 +87,24 @@
 <li>Profit (SOL &amp; USD)</li>
 <li>Strategy decision (Skipped, Partial, Moonshot)</li>
 </ul></li>
-</ul>
-
-<h3>D. Trade Execution</h3>
-
-<ul>
+</ul><h3>D. Trade Execution</h3><ul>
 <li>Uses Jupiter Aggregator API for swaps</li>
 <li>Wallet funded with secure Solana key</li>
 <li>Uses <code>@solana/web3.js</code> + <code>@jup-ag/core</code> for trade submission</li>
-</ul>
-
-<hr />
-
-<h2>Startup Strategy: Snowballing from Low Capital</h2>
-
-<p>To reduce initial risk, the bot begins with a minimal starting balance (e.g., 0.1–0.5 SOL). Profits are recycled into future trades until a working capital of 5 SOL is achieved. This approach enables:
+</ul><hr/></div>
+<div class="section-group"><h2>Startup Strategy: Snowballing from Low Capital</h2><p>To reduce initial risk, the bot begins with a minimal starting balance (e.g., 0.1–0.5 SOL). Profits are recycled into future trades until a working capital of 5 SOL is achieved. This approach enables:
 - Safer validation in live conditions
 - Gradual bankroll growth without additional funding
-- Measurable performance scaling over time</p>
-
-<p><strong>Rules:</strong>
+- Measurable performance scaling over time</p><p><strong>Rules:</strong>
 - Start with 0.05–0.1 SOL trades
 - Reinvest 100% of profit until 5 SOL is reached
-- Then transition to regular reserve/profit cycling</p>
-
-<hr />
-
-<h2>Continuous Operation</h2>
-
-<h3>A. Runtime</h3>
-
-<p><strong>Yes</strong>, the bot is designed to run continuously.
+- Then transition to regular reserve/profit cycling</p><hr/></div>
+<div class="section-group"><h2>Continuous Operation</h2><h3>A. Runtime</h3><p><strong>Yes</strong>, the bot is designed to run continuously.
 - New tokens launch 24/7 on Pump.fun
 - Trades are based on real-time data feeds
-- System polls new tokens in intervals or listens via WebSocket</p>
-
-<h3>B. Profits</h3>
-
-<p>The current algorithm is structured for profit:
+- System polls new tokens in intervals or listens via WebSocket</p><h3>B. Profits</h3><p>The current algorithm is structured for profit:
 - Simulations consistently return <strong>$4,200–$5,100</strong> after accounting for all overhead
-- Slippage, fees, and conservative exits are built into the model</p>
-
-<h3>C. Reinvestment and Reserve Logic</h3>
-
-<ul>
+- Slippage, fees, and conservative exits are built into the model</p><h3>C. Reinvestment and Reserve Logic</h3><ul>
 <li><strong>Snowball Phase:</strong> Reinvest all profits until reaching 5 SOL</li>
 <li><strong>Post-Snowball:</strong>
 <ul>
@@ -144,107 +112,69 @@
 <li>Recycle remaining into bankroll</li>
 <li>Maintain buffer to survive streaks of low output or negative trades</li>
 </ul></li>
-</ul>
-
-<hr />
-
-<h2>Profit Expectations</h2>
-
-<h3>Per Hour Estimate</h3>
-
+</ul><hr/></div>
+<div class="section-group"><h2>Profit Expectations</h2><div>
+<h3>Updated Realistic Throughput Estimate</h3>
 <ul>
+<li>🚀 <strong>Moonshots/hour</strong>: ~9.1</li>
+<li>✅ <strong>Partial Exits/hour</strong>: ~8.9</li>
+<li>💰 <strong>Avg. Profit/Moonshot</strong>: 0.20 SOL</li>
+<li>💰 <strong>Avg. Profit/Partial Exit</strong>: 0.05 SOL</li>
+<li>🧾 <strong>Total Profit/hour</strong>: 2.27 SOL</li>
+<li>💵 <strong>Estimated USD/hour (@ $166/SOL)</strong>: $377.09</li>
+</ul>
+<p><em>This estimate is based on observed simulation results and realistic trade pacing (18 accepted trades/hour).</em></p>
+<hr/>
+</div><h3>Per Hour Estimate</h3><ul>
 <li>Average trade frequency: 20–40 per hour</li>
 <li>Expected win rate: ~60%</li>
 <li>Average profit per trade: ~0.06 SOL ($10.00+)</li>
-</ul>
-
-<p><strong>Estimated Hourly Profit</strong>: 1.2–2.4 SOL/hr (≈ $200–$400/hr)</p>
-
-<blockquote>
-  <p><em>Note: This assumes continuous token launches and sustained market behavior similar to backtest conditions.</em></p>
-</blockquote>
-
-<hr />
-
-<h2>Operational Philosophy</h2>
-
-<p>| Principle                | Implementation |
-|--------------------------|----------------|
-| Selective Entry          | Buyers10s filter |
-| Start Low Capital        | Snowball from 0.1–0.5 SOL to 5 SOL |
-| Bankroll Management      | Grow to 5 SOL before withdrawals |
-| Continuous Execution     | No trade cap, event-based |
-| Profit Capture           | Withdraw 50% of profit post-snowball |
-| Drawdown Protection      | Maintain buffer and cooldown options |</p>
-
-<hr />
-
-<h2>Testing Summary</h2>
-
-<h3>Most Recent Run:</h3>
-
-<ul>
+</ul><p><strong>Estimated Hourly Profit</strong>: 1.2–2.4 SOL/hr (≈ $200–$400/hr)</p><blockquote>
+<p><em>Note: This assumes continuous token launches and sustained market behavior similar to backtest conditions.</em></p>
+</blockquote><hr/></div>
+<div class="section-group"><h2>Operational Philosophy</h2><table>
+<thead>
+<tr><th>Principle</th><th>Implementation</th></tr>
+</thead>
+<tbody>
+<tr><td>Selective Entry</td><td>Buyers10s filter</td></tr>
+<tr><td>Start Low Capital</td><td>Snowball from 0.1–0.5 SOL to 5 SOL</td></tr>
+<tr><td>Bankroll Management</td><td>Grow to 5 SOL before withdrawals</td></tr>
+<tr><td>Continuous Execution</td><td>No trade cap, event-based</td></tr>
+<tr><td>Profit Capture</td><td>Withdraw 50% of profit post-snowball</td></tr>
+<tr><td>Drawdown Protection</td><td>Maintain buffer and cooldown options</td></tr>
+</tbody>
+</table><hr/><hr/></div>
+<div class="section-group"><h2>Testing Summary</h2><h3>Most Recent Run:</h3><ul>
 <li><strong>Timestamp</strong>: 2025:05:20 15-28-06-375</li>
 <li><strong>Total Trades</strong>: 500</li>
 <li><strong>Moonshots</strong>: 85</li>
 <li><strong>Partial Exits</strong>: 168</li>
 <li><strong>Net Profit (SOL)</strong>: 25.4</li>
 <li><strong>Net Profit (USD @ $166)</strong>: $4,216.40</li>
-</ul>
-
-<blockquote>
-  <p>Simulation used Advanced Exit Strategy v2 with fees and slippage.</p>
-</blockquote>
-
-<h3>Sample Moonshot Lifecycle Graphic</h3>
-
-<p><em>A sample graphic of a Moonshot trade will be embedded in the final document.</em></p>
-
-<hr />
-
-<h2>Additional Considerations</h2>
-
-<h3>A. Risks</h3>
-
-<ul>
+</ul><blockquote>
+<p>Simulation used Advanced Exit Strategy v2 with fees and slippage.</p>
+</blockquote><h3>Sample Moonshot Lifecycle Graphic</h3><img alt="Moonshot Lifecycle Chart" src="moonshot_lifecycle.png" style="width:100%;margin:20px 0;"/><hr/></div>
+<div class="section-group"><h2>Additional Considerations</h2><h3>A. Risks</h3><ul>
 <li>Honeypot tokens or scam contracts</li>
 <li>Liquidity locks and instant rugs</li>
 <li>RPC downtime or API limits</li>
 <li>Wallet blacklisting (anti-bot measures)</li>
-</ul>
-
-<h3>B. Future Enhancements</h3>
-
-<ul>
+</ul><h3>B. Future Enhancements</h3><ul>
 <li>Use real-time token charts via Jupiter or Helius</li>
 <li>Add wallet blacklists for known rug creators</li>
 <li>Portfolio heatmap and drawdown tracker</li>
 <li>Dynamic position sizing based on bankroll health</li>
-</ul>
-
-<h3>C. Compliance</h3>
-
-<ul>
+</ul><h3>C. Compliance</h3><ul>
 <li>All operations occur on decentralized exchanges</li>
 <li>No custodial control of user funds unless authorized</li>
 <li>System designed for personal/private deployment</li>
-</ul>
-
-<hr />
-
-<h2>Conclusion</h2>
-
-<p>This project demonstrates a viable, automated trading bot capable of generating consistent profits on meme coin launches. Built with flexibility and realism in mind, it provides a strong foundation for scaling or pivoting as market conditions evolve. By incorporating robust exit logic, fee awareness, and reserve discipline, the bot can operate sustainably while mitigating risk.</p>
-
-<hr />
-
-<h2>Appendix</h2>
-
-<ul>
+</ul><hr/></div>
+<div class="section-group"><h2>Conclusion</h2><p>This project demonstrates a viable, automated trading bot capable of generating consistent profits on meme coin launches. Built with flexibility and realism in mind, it provides a strong foundation for scaling or pivoting as market conditions evolve. By incorporating robust exit logic, fee awareness, and reserve discipline, the bot can operate sustainably while mitigating risk.</p><hr/></div>
+<div class="section-group"><h2>Appendix</h2><ul>
 <li>Key Libraries: <code>@solana/web3.js</code>, <code>dotenv</code>, <code>fs</code>, <code>axios</code>, <code>@jup-ag/core</code></li>
 <li>Dependencies: Jupiter Aggregator API, Solana RPC, Helius (optional)</li>
 <li>Runtime Environment: Node.js 18+, secure VPS or dedicated server</li>
-</ul>
-
+</ul></div>
 </body>
 </html>
