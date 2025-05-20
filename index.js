@@ -125,16 +125,33 @@ async function fetchTokenLaunches(targetCount = 500) {
     saveResultsToCSV(launches);
 }
 
-// Save Results to CSV
+// Save Results to CSV with Unique Filename + Log Summary
 function saveResultsToCSV(data) {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `runs/pumpfun_launches_${timestamp}.csv`;
+
     const header = 'Signature,CreatorWallet,LaunchTimestamp,InitialLiquidity,Buyers10s,Buyers30s,Buyers5m,MaxPriceAchievedPct,TimeAtMaxPriceSec,TradeResult,Profit_SOL,RunningTotal_SOL\n';
     const rows = data
         .map(row =>
             `${row.Signature},${row.CreatorWallet},${row.LaunchTimestamp},${row.InitialLiquidity},${row.Buyers10s},${row.Buyers30s},${row.Buyers5m},${row.MaxPriceAchievedPct},${row.TimeAtMaxPriceSec},${row.TradeResult},${row.Profit_SOL},${row.RunningTotal_SOL}`
         )
         .join('\n');
-    fs.writeFileSync('pumpfun_launches.csv', header + rows);
-    console.log('✅ Saved results to pumpfun_launches.csv');
+    fs.mkdirSync('runs', { recursive: true });
+    fs.writeFileSync(filename, header + rows);
+    console.log(`✅ Saved results to ${filename}`);
+
+    // Append to run log
+    const totalTrades = data.length;
+    const moonshots = data.filter(r => r.TradeResult === "Moonshot (Win)").length;
+    const partials = data.filter(r => r.TradeResult === "Partial Exit (Win)").length;
+    const netProfit = data.reduce((sum, r) => sum + r.Profit_SOL, 0);
+
+    const logLine = `${timestamp},${totalTrades},${moonshots},${partials},${netProfit.toFixed(4)}\n`;
+    const logHeader = 'Timestamp,TotalTrades,Moonshots,PartialExits,NetProfitSOL\n';
+    if (!fs.existsSync('runs/run_log.csv')) {
+        fs.writeFileSync('runs/run_log.csv', logHeader);
+    }
+    fs.appendFileSync('runs/run_log.csv', logLine);
 }
 
 // Run the Analyzer
