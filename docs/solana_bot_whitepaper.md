@@ -81,10 +81,9 @@ To reduce initial risk, the bot begins with a minimal starting balance (e.g., 0.
 
 ### A. Runtime
 
-**Yes**, the bot is designed to run continuously.
-- New tokens launch 24/7 on Pump.fun
-- Trades are based on real-time data feeds
-- System polls new tokens in intervals or listens via WebSocket
+
+The bot is designed for continuous operation, driven by real-time token creation events on Pump.fun. Rather than targeting a specific trade count per hour, it applies strict entry logic whenever a token launch is detected. The system operates via interval polling or WebSocket feeds, ensuring responsive and adaptive trade evaluation around the clock.
+
 
 ### B. Profits
 
@@ -105,6 +104,7 @@ The current algorithm is structured for profit:
 ---
 
 
+
 ## Profit Expectations
 
 
@@ -119,32 +119,27 @@ The current algorithm is structured for profit:
 * 💵 **Estimated USD/hour (@ $166/SOL)**: $377.09
 
 
-*This estimate is based on observed simulation results and realistic trade pacing (18 accepted trades/hour).*
+*This estimate is based on observed simulation results and realistic trade pacing (~18 accepted trades/hour).*
 
 
+### Legacy Estimate (for comparison)
 
-
----
-
-
-### Per Hour Estimate
 
 * Average trade frequency: 20–40 per hour
 * Expected win rate: ~60%
 * Average profit per trade: ~0.06 SOL ($10.00+)
 
-**Estimated Hourly Profit**: 1.2–2.4 SOL/hr (≈ $200–$400/hr)
+
+**Estimated Hourly Profit (Legacy):** 1.2–2.4 SOL/hr (≈ $200–$400/hr)
 
 
-> 
-> *Note: This assumes continuous token launches and sustained market behavior similar to backtest conditions.*
-> 
-> 
-> 
+*Legacy model was based on theoretical assumptions. Simulated results now offer a more grounded profit projection.*
+
 
 
 
 ---
+
 
 
 ## Operational Philosophy
@@ -219,6 +214,136 @@ The current algorithm is structured for profit:
 
 
 ---
+
+
+
+
+## 📈 Lifecycle of a Typical Trade
+
+
+### Trade Categories:
+
+
+
+
+| Category | Trigger Condition | Action Taken | Expected Outcome |
+| --- | --- | --- | --- |
+| ❌ Skipped | Buyers in 10s < 5 | No trade; move on | 0 SOL profit |
+| ✅ Partial Exit | Buyers10s ≥ 5 AND either:• Price < +200%• Peak held < 60s | Early exit at +50% gain | ~0.05 SOL profit |
+| 🚀 Moonshot | Buyers10s ≥ 5 AND:• Price ≥ +200%• Held ≥ 60s | Full ride to +200% gain | ~0.20 SOL profit |
+
+
+### 🔄 Trade Flow Diagram (Textual)
+
+
+
+```
+
+New Token Launch
+      │
+      ▼
+Check Buyers10s
+ ┌────────────┐
+ │ ≥ 5 Buyers │ ───────────────┐
+ └────────────┘               ▼
+       │               Check Price Action
+       ▼               ┌────────────────────────┐
+   Skip Trade          │ Price ≥ +200% AND      │
+                       │ Held ≥ 60s?            │
+                       └────────────────────────┘
+                         │             │
+                         ▼             ▼
+                   🚀 Moonshot    ✅ Partial Exit
+                   Profit ~0.20   Profit ~0.05
+  
+```
+
+### 📊 Sample Trade Distribution (Based on 8 Runs)
+
+
+
+
+| Outcome | Avg % of Accepted Trades | Notes |
+| --- | --- | --- |
+| ❌ Skipped | ~52% | Most tokens filtered early |
+| ✅ Partial Exit | ~26% | Moderate price movement |
+| 🚀 Moonshot | ~23% | High buyer + stable pump |
+
+
+
+
+---
+
+
+
+
+## 🔐 Wallet Architecture & Profit Management
+
+
+### 1. Initial Capital Setup (Snowball Protocol)
+
+
+* **Startup Capital:** Begin with **0.5 SOL** to initiate the snowball protocol.
+* **Source of Funds:** Acquire SOL from an exchange like *Crypto.com* or via a pre-funded Phantom wallet.
+* **Initial Buy-In:** Trades will enter with **0.05–0.1 SOL** during the snowball phase.
+* **Compounding Goal:** Grow to **5 SOL** before initiating withdrawals.
+
+
+### 2. Wallet Roles & Flow
+
+
+
+
+| Wallet | Purpose | Details |
+| --- | --- | --- |
+| 🎯 Hot Wallet | Active trading via bot | Receives 50% of weekly profits; automated via hourly cron job with email confirmation |
+| 🏦 Payout Wallet | Profit extraction | Automated long-term transfer; includes hourly confirmation via email logging |
+| 🧊 Cold Storage | Backup & profit preservation | Manual or automated transfers for long-term safekeeping |
+
+
+### 3. Fund Transfer Logic
+
+
+* Trading bot uses the **Hot Wallet** exclusively for operations.
+* Once bankroll surpasses 5 SOL:
+	+ Withdraw 50% of weekly net profit to the **Payout Wallet**
+	+ Optional: Allocate a portion to **Cold Storage**
+* If **Hot Wallet** drops below 2 SOL, manual or conditional refill is permitted from Cold Storage.
+
+
+### 4. Phantom Wallet Usage
+
+
+Using a **Phantom Wallet** is highly recommended for this system:
+
+
+* Native to the Solana blockchain
+* Seamless integration with `@solana/web3.js` and Jupiter Aggregator APIs
+* Browser and mobile support for on-the-go management
+
+
+Alternatively, users may implement **Solflare**, **Ledger**, or similar Solana-compatible wallets for secure deployment.
+
+
+
+
+---
+
+
+### 5. Automation & Monitoring
+
+
+* A **cron job** runs hourly to:
+	+ Transfer profits from Hot Wallet to Payout Wallet (50% of gains)
+	+ Transfer a portion to Cold Storage (if balance exceeds thresholds)
+* Each transfer event sends a **confirmation email** to the operator for monitoring and recordkeeping.
+* Failures or skipped cycles should trigger alerts to ensure reliability.
+
+
+
+
+---
+
 
 
 ## Conclusion
