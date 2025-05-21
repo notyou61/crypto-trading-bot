@@ -1,0 +1,9 @@
+{
+  "balance": 0.5,
+  "totalTrades": 0,
+  "totalMoonshots": 0,
+  "totalPartials": 0,
+  "totalSkipped": 0,
+  "totalProfit": 0,
+  "history": []
+}

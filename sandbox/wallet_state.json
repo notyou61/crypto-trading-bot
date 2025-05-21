@@ -1,0 +1,16 @@
+{
+    "hotWallet": {
+        "balanceSOL": 0.5,
+        "description": "Active trading capital, starts with 0.5 SOL"
+    },
+    "payoutWallet": {
+        "balanceSOL": 0.0,
+        "description": "Simulated withdrawals for USD conversion (e.g., Crypto.com)"
+    },
+    "coldStorage": {
+        "balanceSOL": 0.0,
+        "description": "Reserve savings or emergency buffer"
+    },
+    "lastUpdate": "2025-05-21T00:00:00Z",
+    "emailNotification": "steve.skye@skyelighting.com"
+}
