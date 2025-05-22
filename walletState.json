@@ -1,10 +1,10 @@
 {
-  "balance": 2.0500000000000003,
-  "totalTrades": 19,
-  "totalMoonshots": 4,
-  "totalPartials": 15,
-  "totalSkipped": 17,
-  "totalProfit": 1.5500000000000003,
+  "balance": 5.799999999999994,
+  "totalTrades": 73,
+  "totalMoonshots": 11,
+  "totalPartials": 62,
+  "totalSkipped": 71,
+  "totalProfit": 5.299999999999994,
   "history": [
     {
       "timestamp": "2025-05-21 15:12:49",
@@ -327,6 +327,978 @@
       "buyers30s": 18,
       "priceSpikePct": 91,
       "timeAtPeak": 75,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 3,
+      "buyers30s": 19,
+      "priceSpikePct": 19,
+      "timeAtPeak": 64,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 9,
+      "buyers30s": 0,
+      "priceSpikePct": 124,
+      "timeAtPeak": 64,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 8,
+      "buyers30s": 7,
+      "priceSpikePct": 235,
+      "timeAtPeak": 80,
+      "result": "🚀 Moonshot",
+      "profit": 0.2
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 1,
+      "buyers30s": 5,
+      "priceSpikePct": 204,
+      "timeAtPeak": 70,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 4,
+      "buyers30s": 3,
+      "priceSpikePct": 279,
+      "timeAtPeak": 44,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 5,
+      "buyers30s": 11,
+      "priceSpikePct": 118,
+      "timeAtPeak": 22,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 6,
+      "buyers30s": 10,
+      "priceSpikePct": 74,
+      "timeAtPeak": 112,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 4,
+      "buyers30s": 17,
+      "priceSpikePct": 266,
+      "timeAtPeak": 56,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 7,
+      "buyers30s": 23,
+      "priceSpikePct": 176,
+      "timeAtPeak": 60,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 1,
+      "buyers30s": 5,
+      "priceSpikePct": 212,
+      "timeAtPeak": 40,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 8,
+      "buyers30s": 20,
+      "priceSpikePct": 250,
+      "timeAtPeak": 48,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 6,
+      "buyers30s": 19,
+      "priceSpikePct": 257,
+      "timeAtPeak": 108,
+      "result": "🚀 Moonshot",
+      "profit": 0.2
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 1,
+      "buyers30s": 11,
+      "priceSpikePct": 269,
+      "timeAtPeak": 109,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 4,
+      "buyers30s": 8,
+      "priceSpikePct": 190,
+      "timeAtPeak": 26,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 5,
+      "buyers30s": 2,
+      "priceSpikePct": 205,
+      "timeAtPeak": 102,
+      "result": "🚀 Moonshot",
+      "profit": 0.2
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 5,
+      "buyers30s": 11,
+      "priceSpikePct": 81,
+      "timeAtPeak": 61,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 0,
+      "buyers30s": 25,
+      "priceSpikePct": 86,
+      "timeAtPeak": 17,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:26:56",
+      "buyers10s": 5,
+      "buyers30s": 4,
+      "priceSpikePct": 125,
+      "timeAtPeak": 32,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 0,
+      "buyers30s": 13,
+      "priceSpikePct": 131,
+      "timeAtPeak": 73,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 9,
+      "buyers30s": 14,
+      "priceSpikePct": 173,
+      "timeAtPeak": 45,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 9,
+      "buyers30s": 28,
+      "priceSpikePct": 61,
+      "timeAtPeak": 5,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 9,
+      "buyers30s": 16,
+      "priceSpikePct": 158,
+      "timeAtPeak": 17,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 5,
+      "buyers30s": 0,
+      "priceSpikePct": 90,
+      "timeAtPeak": 8,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 0,
+      "buyers30s": 7,
+      "priceSpikePct": 4,
+      "timeAtPeak": 35,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 2,
+      "buyers30s": 2,
+      "priceSpikePct": 90,
+      "timeAtPeak": 83,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 3,
+      "buyers30s": 9,
+      "priceSpikePct": 196,
+      "timeAtPeak": 64,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 0,
+      "buyers30s": 26,
+      "priceSpikePct": 113,
+      "timeAtPeak": 79,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 7,
+      "buyers30s": 6,
+      "priceSpikePct": 121,
+      "timeAtPeak": 68,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 1,
+      "buyers30s": 16,
+      "priceSpikePct": 153,
+      "timeAtPeak": 48,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 1,
+      "buyers30s": 6,
+      "priceSpikePct": 7,
+      "timeAtPeak": 97,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 8,
+      "buyers30s": 13,
+      "priceSpikePct": 175,
+      "timeAtPeak": 87,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 1,
+      "buyers30s": 12,
+      "priceSpikePct": 221,
+      "timeAtPeak": 79,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 6,
+      "buyers30s": 20,
+      "priceSpikePct": 290,
+      "timeAtPeak": 9,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 2,
+      "buyers30s": 11,
+      "priceSpikePct": 276,
+      "timeAtPeak": 28,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 5,
+      "buyers30s": 5,
+      "priceSpikePct": 129,
+      "timeAtPeak": 100,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:29:17",
+      "buyers10s": 5,
+      "buyers30s": 9,
+      "priceSpikePct": 125,
+      "timeAtPeak": 90,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 1,
+      "buyers30s": 1,
+      "priceSpikePct": 19,
+      "timeAtPeak": 27,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 3,
+      "buyers30s": 26,
+      "priceSpikePct": 253,
+      "timeAtPeak": 100,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 4,
+      "buyers30s": 8,
+      "priceSpikePct": 197,
+      "timeAtPeak": 101,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 9,
+      "buyers30s": 6,
+      "priceSpikePct": 124,
+      "timeAtPeak": 37,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 1,
+      "buyers30s": 19,
+      "priceSpikePct": 125,
+      "timeAtPeak": 117,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 0,
+      "buyers30s": 9,
+      "priceSpikePct": 138,
+      "timeAtPeak": 114,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 8,
+      "buyers30s": 27,
+      "priceSpikePct": 77,
+      "timeAtPeak": 35,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 6,
+      "buyers30s": 3,
+      "priceSpikePct": 55,
+      "timeAtPeak": 2,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 1,
+      "buyers30s": 16,
+      "priceSpikePct": 67,
+      "timeAtPeak": 109,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 6,
+      "buyers30s": 25,
+      "priceSpikePct": 17,
+      "timeAtPeak": 84,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 6,
+      "buyers30s": 24,
+      "priceSpikePct": 190,
+      "timeAtPeak": 11,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 6,
+      "buyers30s": 2,
+      "priceSpikePct": 133,
+      "timeAtPeak": 3,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 5,
+      "buyers30s": 16,
+      "priceSpikePct": 181,
+      "timeAtPeak": 32,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 2,
+      "buyers30s": 3,
+      "priceSpikePct": 198,
+      "timeAtPeak": 101,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 2,
+      "buyers30s": 7,
+      "priceSpikePct": 111,
+      "timeAtPeak": 95,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 5,
+      "buyers30s": 29,
+      "priceSpikePct": 178,
+      "timeAtPeak": 110,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 8,
+      "buyers30s": 17,
+      "priceSpikePct": 221,
+      "timeAtPeak": 32,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:31:36",
+      "buyers10s": 8,
+      "buyers30s": 27,
+      "priceSpikePct": 206,
+      "timeAtPeak": 47,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 8,
+      "buyers30s": 25,
+      "priceSpikePct": 189,
+      "timeAtPeak": 56,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 8,
+      "buyers30s": 18,
+      "priceSpikePct": 60,
+      "timeAtPeak": 39,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 4,
+      "buyers30s": 27,
+      "priceSpikePct": 66,
+      "timeAtPeak": 1,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 7,
+      "buyers30s": 13,
+      "priceSpikePct": 69,
+      "timeAtPeak": 0,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 1,
+      "buyers30s": 3,
+      "priceSpikePct": 241,
+      "timeAtPeak": 83,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 6,
+      "buyers30s": 7,
+      "priceSpikePct": 80,
+      "timeAtPeak": 41,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 0,
+      "buyers30s": 23,
+      "priceSpikePct": 156,
+      "timeAtPeak": 116,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 0,
+      "buyers30s": 2,
+      "priceSpikePct": 112,
+      "timeAtPeak": 17,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 6,
+      "buyers30s": 19,
+      "priceSpikePct": 109,
+      "timeAtPeak": 31,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 7,
+      "buyers30s": 24,
+      "priceSpikePct": 33,
+      "timeAtPeak": 107,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 0,
+      "buyers30s": 9,
+      "priceSpikePct": 174,
+      "timeAtPeak": 14,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 6,
+      "buyers30s": 7,
+      "priceSpikePct": 141,
+      "timeAtPeak": 106,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 3,
+      "buyers30s": 18,
+      "priceSpikePct": 195,
+      "timeAtPeak": 98,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 9,
+      "buyers30s": 28,
+      "priceSpikePct": 125,
+      "timeAtPeak": 85,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 2,
+      "buyers30s": 13,
+      "priceSpikePct": 40,
+      "timeAtPeak": 9,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 8,
+      "buyers30s": 6,
+      "priceSpikePct": 211,
+      "timeAtPeak": 57,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 8,
+      "buyers30s": 13,
+      "priceSpikePct": 119,
+      "timeAtPeak": 58,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:36:52",
+      "buyers10s": 2,
+      "buyers30s": 11,
+      "priceSpikePct": 237,
+      "timeAtPeak": 22,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 4,
+      "buyers30s": 3,
+      "priceSpikePct": 234,
+      "timeAtPeak": 2,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 2,
+      "buyers30s": 0,
+      "priceSpikePct": 134,
+      "timeAtPeak": 96,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 8,
+      "buyers30s": 19,
+      "priceSpikePct": 111,
+      "timeAtPeak": 110,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 5,
+      "buyers30s": 24,
+      "priceSpikePct": 256,
+      "timeAtPeak": 76,
+      "result": "🚀 Moonshot",
+      "profit": 0.2
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 1,
+      "buyers30s": 9,
+      "priceSpikePct": 7,
+      "timeAtPeak": 23,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 1,
+      "buyers30s": 13,
+      "priceSpikePct": 102,
+      "timeAtPeak": 56,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 5,
+      "buyers30s": 17,
+      "priceSpikePct": 131,
+      "timeAtPeak": 23,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 0,
+      "buyers30s": 12,
+      "priceSpikePct": 128,
+      "timeAtPeak": 0,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 1,
+      "buyers30s": 22,
+      "priceSpikePct": 227,
+      "timeAtPeak": 5,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 8,
+      "buyers30s": 3,
+      "priceSpikePct": 20,
+      "timeAtPeak": 42,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 0,
+      "buyers30s": 25,
+      "priceSpikePct": 236,
+      "timeAtPeak": 67,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 3,
+      "buyers30s": 27,
+      "priceSpikePct": 219,
+      "timeAtPeak": 48,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 6,
+      "buyers30s": 6,
+      "priceSpikePct": 107,
+      "timeAtPeak": 39,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 0,
+      "buyers30s": 23,
+      "priceSpikePct": 56,
+      "timeAtPeak": 63,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 2,
+      "buyers30s": 24,
+      "priceSpikePct": 226,
+      "timeAtPeak": 35,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 6,
+      "buyers30s": 15,
+      "priceSpikePct": 142,
+      "timeAtPeak": 78,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 1,
+      "buyers30s": 7,
+      "priceSpikePct": 54,
+      "timeAtPeak": 91,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:37:21",
+      "buyers10s": 2,
+      "buyers30s": 1,
+      "priceSpikePct": 97,
+      "timeAtPeak": 38,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 9,
+      "buyers30s": 0,
+      "priceSpikePct": 240,
+      "timeAtPeak": 96,
+      "result": "🚀 Moonshot",
+      "profit": 0.2
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 4,
+      "buyers30s": 26,
+      "priceSpikePct": 46,
+      "timeAtPeak": 91,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 6,
+      "buyers30s": 28,
+      "priceSpikePct": 277,
+      "timeAtPeak": 77,
+      "result": "🚀 Moonshot",
+      "profit": 0.2
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 0,
+      "buyers30s": 8,
+      "priceSpikePct": 230,
+      "timeAtPeak": 56,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 9,
+      "buyers30s": 12,
+      "priceSpikePct": 219,
+      "timeAtPeak": 0,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 1,
+      "buyers30s": 14,
+      "priceSpikePct": 243,
+      "timeAtPeak": 33,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 9,
+      "buyers30s": 10,
+      "priceSpikePct": 153,
+      "timeAtPeak": 14,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 4,
+      "buyers30s": 29,
+      "priceSpikePct": 293,
+      "timeAtPeak": 3,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 3,
+      "buyers30s": 16,
+      "priceSpikePct": 250,
+      "timeAtPeak": 96,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 9,
+      "buyers30s": 0,
+      "priceSpikePct": 275,
+      "timeAtPeak": 78,
+      "result": "🚀 Moonshot",
+      "profit": 0.2
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 6,
+      "buyers30s": 12,
+      "priceSpikePct": 254,
+      "timeAtPeak": 28,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 1,
+      "buyers30s": 28,
+      "priceSpikePct": 222,
+      "timeAtPeak": 64,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 3,
+      "buyers30s": 3,
+      "priceSpikePct": 99,
+      "timeAtPeak": 28,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 9,
+      "buyers30s": 11,
+      "priceSpikePct": 69,
+      "timeAtPeak": 85,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 8,
+      "buyers30s": 3,
+      "priceSpikePct": 242,
+      "timeAtPeak": 23,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 8,
+      "buyers30s": 25,
+      "priceSpikePct": 34,
+      "timeAtPeak": 30,
+      "result": "✅ Partial Exit",
+      "profit": 0.05
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 2,
+      "buyers30s": 5,
+      "priceSpikePct": 146,
+      "timeAtPeak": 97,
+      "result": "❌ Skipped",
+      "profit": 0
+    },
+    {
+      "timestamp": "2025-05-22 05:57:36",
+      "buyers10s": 2,
+      "buyers30s": 25,
+      "priceSpikePct": 22,
+      "timeAtPeak": 67,
       "result": "❌ Skipped",
       "profit": 0
     }

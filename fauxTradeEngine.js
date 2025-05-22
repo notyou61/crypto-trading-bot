@@ -1,3 +1,5 @@
+console.log(process.env.REPORT_EMAIL_ADDRESS, process.env.REPORT_EMAIL_PASSWORD);
+
 // fauxTradeEngine.js
 import fs from 'fs';
 import { format } from 'date-fns';
