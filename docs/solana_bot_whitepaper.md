@@ -164,6 +164,30 @@ The current algorithm is structured for profit:
 ---
 
 
+## 📈 Development Roadmap: From Research to Real Profits
+
+To ensure safe and profitable bot deployment, we follow a phased development lifecycle:
+
+### Stage 1: Historical Trading (Backtesting)
+- 🔍 **Purpose:** Validate trading logic against prior Pump.fun token launches.
+- 💾 **Method:** Analyze past token data using stored blockchain snapshots.
+- 📊 **Goal:** Identify patterns, refine triggers (e.g., Buyers10s ≥ 5), and simulate theoretical profits.
+- 🛠️ **Tools:** JSON datasets, Solana transaction history, randomized price modeling.
+
+### Stage 2: Simulated Trading (Paper Trading)
+- 🧪 **Purpose:** Test the bot with *live* token launch data — but without risking real funds.
+- 📉 **Method:** Monitor Pump.fun in real-time and log simulated trades using entry/exit logic.
+- 🧾 **Outcome:** Update walletState.json with paper profits, moonshots, partial exits, and skips.
+- 🧰 **Features:** Buyers10s tracking, price spike simulation, adjustable trade thresholds.
+
+### Stage 3: Live Trading (Real Capital)
+- 🚀 **Purpose:** Transition to active trading with real SOL in a secured wallet.
+- 🔁 **Method:** Execute trades using Jupiter Aggregator and @solana/web3.js.
+- 🔒 **Controls:** Fee/slippage protection, reinvestment rules, cold storage integration.
+- 💰 **Payouts:** Withdraw 50% of weekly net profits, maintain operating reserve, auto-log trades.
+
+> This structured approach ensures we validate and optimize before capital is risked, minimizing exposure and accelerating learning.
+
 ## Testing Summary
 
 ### Most Recent Run:

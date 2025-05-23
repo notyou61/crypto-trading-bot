@@ -147,7 +147,35 @@
 <tr><td>Profit Capture</td><td>Withdraw 50% of profit post-snowball</td></tr>
 <tr><td>Drawdown Protection</td><td>Maintain buffer and cooldown options</td></tr>
 </tbody>
-</table><hr/><hr/></div>
+</table><hr/></div>
+<div class="section-group"><h2>📈 Development Roadmap: From Research to Real Profits</h2><table
+  <p>To ensure safe and profitable bot deployment, we follow a phased development lifecycle:</p>
+
+  <h3>Stage 1: Historical Trading (Backtesting)</h3>
+  <ul>
+    <li>🔍 <strong>Purpose:</strong> Validate trading logic against prior Pump.fun token launches.</li>
+    <li>💾 <strong>Method:</strong> Analyze past token data using stored blockchain snapshots.</li>
+    <li>📊 <strong>Goal:</strong> Identify patterns, refine triggers (e.g., Buyers10s ≥ 5), and simulate theoretical profits.</li>
+    <li>🛠️ <strong>Tools:</strong> JSON datasets, Solana transaction history, randomized price modeling.</li>
+  </ul>
+
+  <h3>Stage 2: Simulated Trading (Paper Trading)</h3>
+  <ul>
+    <li>🧪 <strong>Purpose:</strong> Test the bot with <em>live</em> token launch data — but without risking real funds.</li>
+    <li>📉 <strong>Method:</strong> Monitor Pump.fun in real-time and log simulated trades using entry/exit logic.</li>
+    <li>🧾 <strong>Outcome:</strong> Update walletState.json with paper profits, moonshots, partial exits, and skips.</li>
+    <li>🧰 <strong>Features:</strong> Buyers10s tracking, price spike simulation, adjustable trade thresholds.</li>
+  </ul>
+
+  <h3>Stage 3: Live Trading (Real Capital)</h3>
+  <ul>
+    <li>🚀 <strong>Purpose:</strong> Transition to active trading with real SOL in a secured wallet.</li>
+    <li>🔁 <strong>Method:</strong> Execute trades using Jupiter Aggregator and @solana/web3.js.</li>
+    <li>🔒 <strong>Controls:</strong> Fee/slippage protection, reinvestment rules, cold storage integration.</li>
+    <li>💰 <strong>Payouts:</strong> Withdraw 50% of weekly net profits, maintain operating reserve, auto-log trades.</li>
+  </ul>
+  <blockquote>This structured approach ensures we validate and optimize before capital is risked, minimizing exposure and accelerating learning.</blockquote>
+</table><hr/></div>
 <div class="section-group"><h2>Testing Summary</h2><h3>Most Recent Run:</h3><ul>
 <li><strong>Timestamp</strong>: 2025:05:20 15-28-06-375</li>
 <li><strong>Total Trades</strong>: 500</li>
