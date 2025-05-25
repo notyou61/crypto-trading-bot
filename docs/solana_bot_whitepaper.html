@@ -1,141 +1,332 @@
-
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <title>Solana Bot Whitepaper</title>
 <style>
-    body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; color: #222; }}
-    h1, h2, h3 {{ color: #00539C; }}
-    code {{ background-color: #f4f4f4; padding: 2px 4px; font-size: 90%; border-radius: 4px; }}
-    table {{ width: 100%; border-collapse: collapse; margin-top: 1em; }}
-    th, td {{ padding: 8px 12px; border: 1px solid #ddd; text-align: left; }}
-    th {{ background-color: #f0f0f0; }}
-</style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      line-height: 1.6;
+      color: #222;
+    }
+    h1, h2, h3 {
+      color: #00539C;
+      page-break-after: avoid;
+    }
+    code, pre {
+      background-color: #f4f4f4;
+      padding: 4px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+      page-break-inside: avoid;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    section {
+      page-break-inside: avoid;
+      margin-bottom: 40px;
+    }
+    img {
+      display: block;
+      max-width: 100%;
+      margin: 20px auto;
+      page-break-inside: avoid;
+    }
+  </style>
 </head>
 <body>
-<h1>White Paper: Automated Meme Coin Trading Bot on Solana (Pump.fun Strategy)</h1>
-
-<h2>Executive Summary</h2>
+<section>
+<h1>White Paper: Automated Meme Coin Trading Bot</h1>
+</section><section><h2>Executive Summary</h2>
 <p>This white paper outlines the development, strategy, implementation, and operational approach behind an automated trading bot targeting meme coin launches on the Solana blockchain via the Pump.fun platform. Through intelligent trade filtering, conservative capital deployment, and structured reinvestment, this bot aims to deliver sustainable daily profits while mitigating risk.</p>
-
-<h2>Project Goals</h2>
+<hr/>
+</section><section><h2>🎯 Project Goals</h2>
 <ul>
-<li>Identify early-stage meme coin launches with high growth potential</li>
-<li>Automate trade execution with buy-in logic, exit strategy, and slippage management</li>
-<li>Simulate real-world constraints including transaction fees, price decay, and liquidity</li>
+<li>Identify early-stage meme coin launches with high growth potential  </li>
+<li>Automate trade execution with buy-in logic, exit strategy, and slippage management  </li>
+<li>Simulate real-world constraints including transaction fees, price decay, and liquidity  </li>
 <li>Generate consistent profit with minimal human oversight</li>
 </ul>
-
-<h2>System Architecture</h2>
-
-<h3>A. Data Collection & Filtering</h3>
+<hr/>
+</section><section><h2>🧩 System Architecture</h2>
+<h3>Data Collection &amp; Filtering</h3>
 <ul>
-<li>Monitors token creation events using Solana RPC or Helius API</li>
-<li>Pulls buyer activity in first 10s, 30s, and 5m windows</li>
+<li>Monitors token creation events using Solana RPC or Helius API  </li>
+<li>Pulls buyer activity in first 10s, 30s, and 5m windows  </li>
 <li>Simulates price trajectory using on-chain data or randomized modeling</li>
 </ul>
-
-<h3>B. Decision Engine</h3>
-<p><strong>v2 Strategy (Legacy):</strong></p>
+<h3>Decision Engine</h3>
+<h4>v2 Strategy (Legacy)</h4>
 <ul>
-<li><strong>Buy Trigger:</strong> Enters with 0.05–0.1 SOL if Buyers10s ≥ 5</li>
+<li><strong>Buy Trigger:</strong> Enters with 0.05–0.1 SOL if Buyers10s ≥ 5  </li>
 <li><strong>Exit Logic:</strong>
-  <ul>
-    <li>Moonshot: +200% price held ≥ 60s (~0.20 SOL profit)</li>
-    <li>Partial Exit: +50% fallback (~0.05 SOL profit)</li>
-    <li>Skipped: If momentum or duration is weak</li>
-  </ul>
-</li>
-</ul>
-
-<p><strong>v3 Strategy (Current):</strong></p>
 <ul>
-<li><strong>Buy Trigger:</strong> Enters only after price has already increased by at least +10% (profit-in-place)</li>
+<li>Moonshot: +200% price held ≥ 60s (~0.20 SOL profit)  </li>
+<li>Partial Exit: +50% fallback (~0.05 SOL profit)  </li>
+<li>Skipped: If momentum or duration is weak  </li>
+</ul></li>
+</ul>
+<h4>v3 Strategy (Current)</h4>
+<ul>
+<li><strong>Buy Trigger:</strong> Enters only after price has already increased by at least +10% (profit-in-place)  </li>
 <li><strong>Exit Logic:</strong>
-  <ul>
-    <li>Moonshot: +200% AND held ≥ 60s</li>
-    <li>Partial Exit: +50% OR no moonshot within max 120s hold</li>
-    <li>Timeout: Trade is exited if no valid gain within hold window</li>
-  </ul>
-</li>
-</ul>
-
-<h3>C. Slippage + Fees</h3>
 <ul>
-<li>Deducts 0.0001 SOL fixed fee</li>
-<li>Applies 1–5% slippage adjustment depending on price action simulation</li>
+<li>Moonshot: +200% AND held ≥ 60s  </li>
+<li>Partial Exit: +50% OR no moonshot within max 120s hold  </li>
+<li>Timeout: Trade is exited if no valid gain within hold window  </li>
+</ul></li>
 </ul>
-
-<h3>D. Logging</h3>
+<h3>Slippage + Fees</h3>
 <ul>
-<li>Timestamp</li>
-<li>Buyers (10s/30s/5m)</li>
-<li>Entry trigger type (Buyers10s, ProfitInPlace)</li>
-<li>Entry price, Exit price</li>
-<li>Profit (SOL & USD)</li>
-<li>Strategy decision (Skipped, Partial, Moonshot, Timed Out)</li>
+<li>Deducts 0.0001 SOL fixed fee  </li>
+<li>Applies 1–5% slippage adjustment depending on price action simulation  </li>
 </ul>
-
-<h3>E. Trade Execution</h3>
+<h3>Logging</h3>
+<p>Each trade logs:
+- Timestamp<br/>
+- Buyers (10s/30s/5m)<br/>
+- Entry trigger type (Buyers10s, ProfitInPlace)<br/>
+- Entry price, Exit price<br/>
+- Profit (SOL &amp; USD)<br/>
+- Strategy decision (Skipped, Partial, Moonshot, Timed Out)  </p>
+<h3>Trade Execution</h3>
 <ul>
-<li>Uses Jupiter Aggregator API for swaps</li>
-<li>Wallet funded with secure Solana key</li>
+<li>Uses Jupiter Aggregator API for swaps  </li>
+<li>Wallet funded with secure Solana key  </li>
 <li>Uses <code>@solana/web3.js</code> + <code>@jup-ag/core</code> for trade submission</li>
 </ul>
-
-<h2>Startup Strategy: Snowballing from Low Capital</h2>
+</section><section><h2>🧠 Strategy Overview</h2>
+<h3>Snowball Strategy (v3 – Low Risk)</h3>
 <ul>
-<li>Start with 0.05–0.1 SOL trades</li>
-<li>Reinvest 100% of profit until 5 SOL is reached</li>
-<li>Then transition to regular reserve/profit cycling</li>
+<li><strong>Initial Buy Trigger:</strong> +10% price increase (profit-in-place)</li>
+<li><strong>Exit Criteria:</strong>
+<ul>
+<li>Primary: +200% gain after 60s</li>
+<li>Fallback: +50% gain (if 120s max hold reached)</li>
+</ul></li>
+<li><strong>Max Hold Time:</strong> 120s</li>
+<li><strong>Initial Buy Amount:</strong> 0.05–0.1 SOL</li>
+<li><strong>Reinvestment:</strong> Snowballs gains until 5 SOL bankroll</li>
 </ul>
-
-<h2>Continuous Operation</h2>
+<hr/>
+</section><section><h2>📊 Strategy Walkthrough Table</h2>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Time Since Launch</th>
+<th>Price Gain</th>
+<th>Action Taken</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Launch</td>
+<td>0 min</td>
+<td>1.00x</td>
+<td>Monitor</td>
+<td>Await 10% gain</td>
+</tr>
+<tr>
+<td>Trigger</td>
+<td>0:12</td>
+<td>+10%</td>
+<td>Buy 0.1 SOL</td>
+<td>Snowball entry</td>
+</tr>
+<tr>
+<td>Pump Phase</td>
+<td>0:45</td>
+<td>+110%</td>
+<td>Hold</td>
+<td>Too early to exit</td>
+</tr>
+<tr>
+<td>Surge</td>
+<td>1:20</td>
+<td>+190%</td>
+<td>Hold</td>
+<td>Near threshold</td>
+</tr>
+<tr>
+<td>Peak Exit</td>
+<td>1:40</td>
+<td>+210%</td>
+<td>Sell</td>
+<td>Meets primary target</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+</section><section><h2>💰 Startup Strategy: Snowballing from Low Capital</h2>
+<p>To reduce initial risk, the bot begins with a minimal starting balance (e.g., 0.1–0.5 SOL). Profits are recycled into future trades until a working capital of 5 SOL is achieved.</p>
+<p><strong>Rules:</strong>
+- Start with 0.05–0.1 SOL trades
+- Reinvest 100% of profit until 5 SOL is reached
+- Then transition to regular reserve/profit cycling</p>
+<hr/>
+</section><section><h2>📈 Backtest Summary Snapshot</h2>
+<div class="codehilite">
+<pre><span></span><code>📅 Timestamp: 2025:05:20 15-28-06-375  
+📊 Total Trades: 500  
+🚀 Moonshots: 85  
+📤 Partial Exits: 168  
+💰 Net Profit (SOL): 25.4  
+💵 Net Profit (USD @ $166): $4,216.40
+</code></pre>
+</div>
+<div class="codehilite">
+<pre><span></span><code>📅 Timestamp: 2025:05:23 19-59-19-302  
+📊 Total Trades: 632  
+🚀 Moonshots: 10  
+📤 Partial Exits: 108  
+⏭️ Skipped: 514  
+💰 Net Profit (SOL): 7.4  
+💵 Net Profit (USD @ $166): $1,228.40
+</code></pre>
+</div>
+<hr/>
+<hr/>
+</section><section><h2>🔁 Continuous Operation</h2>
 <h3>A. Runtime</h3>
-<p>Bot operates continuously via polling/WebSocket feeds on Pump.fun launches.</p>
-
+<p>The bot is designed for continuous operation, driven by real-time token creation events on Pump.fun.</p>
 <h3>B. Profits</h3>
-<p>Updated strategy yields ~0.05 SOL/trade, consistent and conservative.</p>
-
+<p>Updated strategy consistently yields ~0.05 SOL/trade</p>
 <h3>C. Reinvestment and Reserve Logic</h3>
 <ul>
-<li>Reinvest all profits until 5 SOL</li>
-<li>Withdraw 50% of weekly net profit afterward</li>
-<li>Maintain buffer to mitigate losses</li>
-</ul>
-
-<h2>Profit Expectations</h2>
+<li><strong>Snowball Phase:</strong> Reinvest all profits until reaching 5 SOL  </li>
+<li><strong>Post-Snowball:</strong>
 <ul>
-<li>Partial Exits/hour: ~18</li>
-<li>Avg. Profit/Partial Exit: 0.05 SOL</li>
-<li>Total Profit/hour: ~0.9 SOL</li>
-<li>Estimated USD/hour (@ $166/SOL): ~$149.40</li>
+<li>Withdraw 50% of weekly net profit  </li>
+<li>Recycle remaining into bankroll  </li>
+<li>Maintain buffer to survive streaks of low output or negative trades</li>
+</ul></li>
 </ul>
-
-<h2>Wallet Architecture & Profit Management</h2>
+<hr/>
+</section><section><h2>📈 Profit Expectations</h2>
+<h3>Updated Realistic Throughput Estimate</h3>
 <ul>
-<li>Start with 0.5 SOL</li>
-<li>Hot Wallet: Trades</li>
-<li>Payout Wallet: Weekly profit</li>
-<li>Cold Storage: Reserve</li>
+<li>✅ Partial Exits/hour: ~18  </li>
+<li>💰 Avg. Profit/Partial Exit: 0.05 SOL  </li>
+<li>🧾 Total Profit/hour: ~0.9 SOL  </li>
+<li>💵 Estimated USD/hour (@ $166/SOL): ~$149.40</li>
 </ul>
-
-<h2>Development Lifecycle</h2>
-<ol>
-<li>Stage 1: Historical Backtesting</li>
-<li>Stage 2: Simulated Trading (Paper)</li>
-<li>Stage 3: Live Trading</li>
-</ol>
-
-<h2>Conclusion</h2>
-<p>The updated v3 strategy allows for safer, momentum-confirmed entries and consistent exits. This enables sustainable, scalable meme coin trading on Solana with minimized risk.</p>
-
-<h2>Appendix</h2>
+<hr/>
+</section><section><h2>🔐 Wallet Architecture &amp; Profit Management</h2>
+<h3>1. Initial Capital Setup</h3>
 <ul>
-<li>Key Libraries: <code>@solana/web3.js</code>, <code>dotenv</code>, <code>fs</code>, <code>axios</code>, <code>@jup-ag/core</code></li>
-<li>Runtime: Node.js 18+, secure VPS or dedicated server</li>
+<li>Begin with 0.5 SOL to initiate the snowball protocol  </li>
+<li>Source of funds: Phantom wallet or exchange  </li>
+<li>Buy-in: 0.05–0.1 SOL per trade</li>
 </ul>
-
+<h3>2. Wallet Roles &amp; Flow</h3>
+<ul>
+<li>🎯 Hot Wallet: Bot trades from here  </li>
+<li>🏦 Payout Wallet: Receives 50% weekly profits  </li>
+<li>🧊 Cold Storage: Backup/reserve allocation</li>
+</ul>
+<h3>3. Automation &amp; Monitoring</h3>
+<ul>
+<li>Hourly cron job:
+<ul>
+<li>Transfers to Payout/Cold Wallet  </li>
+<li>Sends email confirmations  </li>
+<li>Alerts for missed transfers or errors</li>
+</ul></li>
+</ul>
+</section><section><h2>🛠️ Development Lifecycle</h2>
+<ul>
+<li><p><strong>Stage 1: Historical Backtesting</strong><br/>
+Analyze past Pump.fun launches using JSON + blockchain snapshots<br/>
+Validate triggers and profit logic (Buyers10s, Profit-in-Place)</p></li>
+<li><p><strong>Stage 2: Simulated Trading (Paper Trading)</strong><br/>
+Run bot logic in real-time with no capital</p></li>
+<li><p><strong>Stage 3: Live Trading (Real Capital)</strong><br/>
+Activate trades via secure wallet<br/>
+Begin Snowball strategy</p></li>
+</ul>
+<hr/>
+</section><section><h2>🔗 Links &amp; Resources</h2>
+<ul>
+<li>Pump.fun Token: <a href="https://pump.fun">pump.fun</a> </li>
+<li>Solana Explorer: <a href="https://explorer.solana.com">explorer.solana.com</a> </li>
+<li>Jupiter Aggregator: <a href="https://jup.ag">jup.ag</a> </li>
+<li>Helius API (optional): <a href="https://www.helius.xyz">helius.xyz</a></li>
+</ul>
+<hr/>
+</section><section><h2>📊 Case Study – Confirmed Moonshot Trade (Real On-Chain)</h2>
+<p><strong>Token:</strong> <a href="https://pump.fun/9NWUanJ4kJZJQiSfDL6bznAFF46QpPKmJ6fadhpMpump"><code>9NWUanJ4kJZJQiSfDL6bznAFF46QpPKmJ6fadhpMpump</code></a><br/>
+<strong>Observed on-chain via Pump.fun</strong></p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Time Since Launch</th>
+<th>Price Gain</th>
+<th>Action Taken</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Launch</td>
+<td>0 min</td>
+<td>1.00x</td>
+<td>No action</td>
+</tr>
+<tr>
+<td>Spike</td>
+<td>~1–2 min</td>
+<td>1.10–1.20x</td>
+<td>✅ Bot enters (profit-in-place)</td>
+</tr>
+<tr>
+<td>Hold</td>
+<td>~3–20 min</td>
+<td>2x → 10x+</td>
+<td>✅ Meets Moonshot condition</td>
+</tr>
+<tr>
+<td>Exit</td>
+<td>~25 min (1496s)</td>
+<td>93.07x</td>
+<td>✅ Bot exits, logs major profit</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Initial Investment:</strong> 0.05 SOL (Snowball Protocol)  </li>
+<li><strong>Exit Value:</strong> ~4.6535 SOL  </li>
+<li><strong>Profit Realized:</strong> ~4.6034 SOL  </li>
+<li><strong>USD Equivalent (@ $176.20):</strong> ~$811.30 USD</li>
+</ul>
+<p>This example highlights the bot’s ability to detect early momentum, safely enter with a small stake, and ride an extended price trajectory to a profitable exit.</p>
+<hr/>
+</section><section><h2>🧠 Moonshot Lifecycle</h2>
+<p><img alt="Sample Moonshot Lifecycle" src="moonshot_lifecycle.png"/></p>
+<hr/>
+</section><section><h2>✅ Conclusion</h2>
+<p>This project presents a viable, adaptable framework for trading meme coins on Solana in an automated and risk-managed fashion. The updated v3 strategy allows for a "wait-and-see" profit confirmation entry, reducing false positives and ensuring safer deployments. With structured reinvestment and modular control, the bot can scale from experimentation to profitability with minimal human oversight.</p>
+<hr/>
+</section><section><h2>📦 Appendix</h2>
+<ul>
+<li><strong>Key Libraries:</strong> <code>@solana/web3.js</code>, <code>dotenv</code>, <code>fs</code>, <code>axios</code>, <code>@jup-ag/core</code> </li>
+<li><strong>Dependencies:</strong> Jupiter Aggregator API, Solana RPC, Helius (optional)  </li>
+<li><strong>Runtime:</strong> Node.js 18+, secure VPS or dedicated server</li>
+</ul>
+</section>
 </body>
 </html>
