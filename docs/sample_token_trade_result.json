@@ -1,0 +1,20 @@
+[
+  {
+    "token": "D1fF3r3nT",
+    "launchTimestamp": "2025-05-24T17:22:00Z",
+    "initialPrice": 5.5e-05,
+    "peakPrice": 0.00165,
+    "peakGain": 30.0,
+    "timeToPeakMs": 46000,
+    "collapseTimeMs": 91000,
+    "buyers10s": 18,
+    "buyers30s": 35,
+    "holdDuration": 87,
+    "exitPrice": 0.0011,
+    "profitGain": 20.0,
+    "tier": "Supermoon",
+    "tradeTaken": true,
+    "triggeredAtMs": 15000,
+    "notes": "Profit-in-place detected at +10% at 15s. Supermoon tier hit at 46s."
+  }
+]

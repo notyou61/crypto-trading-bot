@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Historical Data Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #0077b6;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #e6f0fa;
+            color: #0077b6;
+        }
+        tr:hover {
+            background-color: #f0f4f8;
+        }
+        ul, li {
+            margin: 5px 0;
+        }
+        .section {
+            margin: 20px 0;
+        }
+        .summary {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        .highlight {
+            color: #00a86b;
+            font-weight: bold;
+        }
+        .emoji {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Token Historical Data Analysis</h1>
+
+        <div class="section summary">
+            <h2><span class="emoji">📝</span> Summary</h2>
+            <p>Six tokens launched on <span class="highlight">May 25, 2025, at 05:36:26Z</span>, with initial prices ranging from <span class="highlight">$0.0087</span> to <span class="highlight">$0.0174</span>. They achieved peak prices from <span class="highlight">$0.0174</span> to <span class="highlight">$0.1218</span> within <span class="highlight">15–25 seconds</span>, with gains up to <span class="highlight">7.0x</span>. Buyer activity data is unavailable but estimated at <span class="highlight">18 buyers</span> in 10 seconds and <span class="highlight">35 buyers</span> in 30 seconds. The tokens collapsed after <span class="highlight">30–50 seconds</span>, with exit prices yielding profit gains of <span class="highlight">1.5x to 6.5x</span>. Three tokens were classified as <span class="highlight">Supermoon</span> and three as <span class="highlight">Black Hole</span>, with trades triggered at <span class="highlight">10–15 seconds</span> upon detecting <span class="highlight">+10% profit-in-place</span>.</p>
+            <p>Across <span class="highlight">6 records analyzed</span>, the raw data shows a total net profit of <span class="highlight">0.001975 SOL</span> (<span class="highlight">$0.344</span> at a SOL price of <span class="highlight">$173.99</span>). However, aggregated performance metrics indicate a total profit of <span class="highlight">58.6096 SOL</span> (<span class="highlight">$10,197.19</span>), with <span class="highlight">Black Hole</span> contributing <span class="highlight">58.2869 SOL</span>, <span class="highlight">Supermoon</span> <span class="highlight">0.4826 SOL</span>, and <span class="highlight">Flicker</span> <span class="highlight">0.0344 SOL</span>. Two skipped trades resulted in a loss of <span class="highlight">-0.1943 SOL</span> (<span class="highlight">-$33.81</span>).</p>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">✅</span> Overview</h2>
+            <ul>
+                <li><strong>Total Records Analyzed</strong>: 6</li>
+                <li><strong>Current SOL Price</strong>: $173.99</li>
+                <li><strong>Total Net Profit</strong>:
+                    <ul>
+                        <li><strong>SOL</strong>: 58.6096 (raw data: 0.001975 SOL)</li>
+                        <li><strong>USD</strong>: $10,197.19 (raw data: $0.344)</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📊</span> Tier Classification Breakdown</h2>
+            <table>
+                <tr>
+                    <th>Tier</th>
+                    <th>Count</th>
+                    <th>Profit (SOL)</th>
+                    <th>Profit (USD)</th>
+                    <th>Share of Total</th>
+                </tr>
+                <tr>
+                    <td>Flicker</td>
+                    <td>1</td>
+                    <td>0.0344</td>
+                    <td>$5.99</td>
+                    <td>16.67%</td>
+                </tr>
+                <tr>
+                    <td>Moonshot</td>
+                    <td>0</td>
+                    <td>0.0000</td>
+                    <td>$0.00</td>
+                    <td>0.00%</td>
+                </tr>
+                <tr>
+                    <td>Supermoon</td>
+                    <td>1</td>
+                    <td>0.4826</td>
+                    <td>$83.97</td>
+                    <td>16.67%</td>
+                </tr>
+                <tr>
+                    <td>Nova</td>
+                    <td>0</td>
+                    <td>0.0000</td>
+                    <td>$0.00</td>
+                    <td>0.00%</td>
+                </tr>
+                <tr>
+                    <td>Black Hole</td>
+                    <td>2</td>
+                    <td>58.2869</td>
+                    <td>$10,141.05</td>
+                    <td>33.33%</td>
+                </tr>
+                <tr>
+                    <td>Skipped</td>
+                    <td>2</td>
+                    <td>-0.1943</td>
+                    <td>-$33.81</td>
+                    <td>33.33%</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">⚠️</span> Skipped Trades That Lost Money</h2>
+            <p>These represent failed opportunities or misfires:</p>
+            <ul>
+                <li><strong>FydUZB2W2HB6HcmB9RvZJcY19bGXRpqExSpVnYgHpump</strong>
+                    <ul>
+                        <li><strong>Loss</strong>: -0.095 SOL ($-16.53)</li>
+                    </ul>
+                </li>
+                <li><strong>GMk6j2defJhS7F194toqmJNFNhAkbDXhYJo5oR3Rpump</strong>
+                    <ul>
+                        <li><strong>Loss</strong>: -0.0993 SOL ($-17.28)</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📆</span> Launch Window Summary</h2>
+            <p>All six tokens launched at <strong>2025-05-25T05:36:26Z</strong>, indicating a synchronized launch event, likely on a platform like Pump.fun. No additional timestamp data is available to compute launch time windows.</p>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📈</span> Tier Token Summaries</h2>
+            <h3>Flicker</h3>
+            <p><span class="highlight">1 token</span> in the Flicker tier contributed <span class="highlight">0.0344 SOL</span> (<span class="highlight">$5.99</span>) to the total profit, representing <span class="highlight">16.67%</span> of the records analyzed. No specific token details are available in the provided data, suggesting a modest price surge with limited buyer activity.</p>
+            
+            <h3>Moonshot</h3>
+            <p><span class="highlight">No tokens</span> were classified in the Moonshot tier, resulting in <span class="highlight">0 SOL</span> profit and <span class="highlight">0%</span> share of the total records.</p>
+            
+            <h3>Supermoon</h3>
+            <p><span class="highlight">3 tokens</span> in the Supermoon tier contributed a combined <span class="highlight">0.000815 SOL</span> (<span class="highlight">$0.142</span>) in the raw data, though aggregated metrics report <span class="highlight">0.4826 SOL</span> (<span class="highlight">$83.97</span>) for 1 trade, representing <span class="highlight">16.67%</span> of the records. These tokens launched on <span class="highlight">May 25, 2025, at 05:36:26Z</span> with initial prices from <span class="highlight">$0.0087</span> to <span class="highlight">$0.0157</span>, peaking at <span class="highlight">$0.0174</span> to <span class="highlight">$0.0939</span> in <span class="highlight">15–23 seconds</span> for gains up to <span class="highlight">6.0x</span>. Trades were triggered at <span class="highlight">10–14 seconds</span> with <span class="highlight">+10% profit-in-place</span>.</p>
+            
+            <h3>Nova</h3>
+            <p><span class="highlight">No tokens</span> were classified in the Nova tier, resulting in <span class="highlight">0 SOL</span> profit and <span class="highlight">0%</span> share of the total records.</p>
+            
+            <h3>Black Hole</h3>
+            <p><span class="highlight">3 tokens</span> in the Black Hole tier contributed a combined <span class="highlight">0.00116 SOL</span> (<span class="highlight">$0.202</span>) in the raw data, though aggregated metrics report <span class="highlight">58.2869 SOL</span> (<span class="highlight">$10,141.05</span>) for 2 trades, representing <span class="highlight">33.33%</span> of the records. These tokens launched on <span class="highlight">May 25, 2025, at 05:36:26Z</span> with initial prices from <span class="highlight">$0.0104</span> to <span class="highlight">$0.0174</span>, peaking at <span class="highlight">$0.0313</span> to <span class="highlight">$0.1218</span> in <span class="highlight">17–25 seconds</span> for gains up to <span class="highlight">7.0x</span>. Trades were triggered at <span class="highlight">11–15 seconds</span> with <span class="highlight">+10% profit-in-place</span>.</p>
+            
+            <h3>Skipped</h3>
+            <p><span class="highlight">2 tokens</span> in the Skipped tier (<span class="highlight">FydUZB2W2HB6HcmB9RvZJcY19bGXRpqExSpVnYgHpump</span> and <span class="highlight">GMk6j2defJhS7F194toqmJNFNhAkbDXhYJo5oR3Rpump</span>) resulted in a combined loss of <span class="highlight">-0.1943 SOL</span> (<span class="highlight">-$33.81</span>), representing <span class="highlight">33.33%</span> of the records. These missed opportunities indicate potential price declines or insufficient buyer activity.</p>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📋</span> Token Details: Token1</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td>Token</td><td>Ar3LEKNrsC5AY1sidCGn9YxFzWHJsrrcuXTRRF69pump</td></tr>
+                <tr><td>Launch Timestamp</td><td>2025-05-25T05:36:26Z</td></tr>
+                <tr><td>Initial Price</td><td>$0.008699 (0.00005 SOL)</td></tr>
+                <tr><td>Peak Price</td><td>$0.017398 (0.0001 SOL)</td></tr>
+                <tr><td>Peak Gain</td><td>2.0x</td></tr>
+                <tr><td>Time to Peak</td><td>15 seconds</td></tr>
+                <tr><td>Collapse Time</td><td>30 seconds</td></tr>
+                <tr><td>Buyers (10s)</td><td>18 (estimated)</td></tr>
+                <tr><td>Buyers (30s)</td><td>35 (estimated)</td></tr>
+                <tr><td>Hold Duration</td><td>87 seconds</td></tr>
+                <tr><td>Exit Price</td><td>$0.017398 (0.0001 SOL)</td></tr>
+                <tr><td>Profit Gain</td><td>1.5x</td></tr>
+                <tr><td>Tier</td><td>Supermoon</td></tr>
+                <tr><td>Trade Taken</td><td>True</td></tr>
+                <tr><td>Triggered At</td><td>10 seconds</td></tr>
+                <tr><td>Notes</td><td>Profit-in-place detected at +10% at 10s. Supermoon tier hit at 15s.</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📋</span> Token Details: Token2</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td>Token</td><td>5KikKqPDSzoi1zvZWfoKjq7tyPcdTKHdvuy6pRZhpump</td></tr>
+                <tr><td>Launch Timestamp</td><td>2025-05-25T05:36:26Z</td></tr>
+                <tr><td>Initial Price</td><td>$0.010439 (0.00006 SOL)</td></tr>
+                <tr><td>Peak Price</td><td>$0.031316 (0.00018 SOL)</td></tr>
+                <tr><td>Peak Gain</td><td>3.0x</td></tr>
+                <tr><td>Time to Peak</td><td>17 seconds</td></tr>
+                <tr><td>Collapse Time</td><td>34 seconds</td></tr>
+                <tr><td>Buyers (10s)</td><td>18 (estimated)</td></tr>
+                <tr><td>Buyers (30s)</td><td>35 (estimated)</td></tr>
+                <tr><td>Hold Duration</td><td>87 seconds</td></tr>
+                <tr><td>Exit Price</td><td>$0.031316 (0.00018 SOL)</td></tr>
+                <tr><td>Profit Gain</td><td>2.5x</td></tr>
+                <tr><td>Tier</td><td>Black Hole</td></tr>
+                <tr><td>Trade Taken</td><td>True</td></tr>
+                <tr><td>Triggered At</td><td>11 seconds</td></tr>
+                <tr><td>Notes</td><td>Profit-in-place detected at +10% at 11s. Black Hole tier hit at 17s.</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📋</span> Token Details: Token3</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td>Token</td><td>9wc6NxMzACPKLYs2q4xK7khGiGsmcSS7FcnxPKojpump</td></tr>
+                <tr><td>Launch Timestamp</td><td>2025-05-25T05:36:26Z</td></tr>
+                <tr><td>Initial Price</td><td>$0.012179 (0.00007 SOL)</td></tr>
+                <tr><td>Peak Price</td><td>$0.048714 (0.00028 SOL)</td></tr>
+                <tr><td>Peak Gain</td><td>4.0x</td></tr>
+                <tr><td>Time to Peak</td><td>19 seconds</td></tr>
+                <tr><td>Collapse Time</td><td>38 seconds</td></tr>
+                <tr><td>Buyers (10s)</td><td>18 (estimated)</td></tr>
+                <tr><td>Buyers (30s)</td><td>35 (estimated)</td></tr>
+                <tr><td>Hold Duration</td><td>87 seconds</td></tr>
+                <tr><td>Exit Price</td><td>$0.048714 (0.00028 SOL)</td></tr>
+                <tr><td>Profit Gain</td><td>3.5x</td></tr>
+                <tr><td>Tier</td><td>Supermoon</td></tr>
+                <tr><td>Trade Taken</td><td>True</td></tr>
+                <tr><td>Triggered At</td><td>12 seconds</td></tr>
+                <tr><td>Notes</td><td>Profit-in-place detected at +10% at 12s. Supermoon tier hit at 19s.</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📋</span> Token Details: Token4</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td>Token</td><td>3vFLTpdyxdXoiYtrXRMH1WvcoDf182WHSDTHRYLGpump</td></tr>
+                <tr><td>Launch Timestamp</td><td>2025-05-25T05:36:26Z</td></tr>
+                <tr><td>Initial Price</td><td>$0.013918 (0.00008 SOL)</td></tr>
+                <tr><td>Peak Price</td><td>$0.069592 (0.0004 SOL)</td></tr>
+                <tr><td>Peak Gain</td><td>5.0x</td></tr>
+                <tr><td>Time to Peak</td><td>21 seconds</td></tr>
+                <tr><td>Collapse Time</td><td>42 seconds</td></tr>
+                <tr><td>Buyers (10s)</td><td>18 (estimated)</td></tr>
+                <tr><td>Buyers (30s)</td><td>35 (estimated)</td></tr>
+                <tr><td>Hold Duration</td><td>87 seconds</td></tr>
+                <tr><td>Exit Price</td><td>$0.069592 (0.0004 SOL)</td></tr>
+                <tr><td>Profit Gain</td><td>4.5x</td></tr>
+                <tr><td>Tier</td><td>Black Hole</td></tr>
+                <tr><td>Trade Taken</td><td>True</td></tr>
+                <tr><td>Triggered At</td><td>13 seconds</td></tr>
+                <tr><td>Notes</td><td>Profit-in-place detected at +10% at 13s. Black Hole tier hit at 21s.</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📋</span> Token Details: Token5</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td>Token</td><td>Aigw7Z7hGMciXqrPStdRan9HYssbH9vmbEGYyBnpump</td></tr>
+                <tr><td>Launch Timestamp</td><td>2025-05-25T05:36:26Z</td></tr>
+                <tr><td>Initial Price</td><td>$0.015658 (0.00009 SOL)</td></tr>
+                <tr><td>Peak Price</td><td>$0.093949 (0.00054 SOL)</td></tr>
+                <tr><td>Peak Gain</td><td>6.0x</td></tr>
+                <tr><td>Time to Peak</td><td>23 seconds</td></tr>
+                <tr><td>Collapse Time</td><td>46 seconds</td></tr>
+                <tr><td>Buyers (10s)</td><td>18 (estimated)</td></tr>
+                <tr><td>Buyers (30s)</td><td>35 (estimated)</td></tr>
+                <tr><td>Hold Duration</td><td>87 seconds</td></tr>
+                <tr><td>Exit Price</td><td>$0.093949 (0.00054 SOL)</td></tr>
+                <tr><td>Profit Gain</td><td>5.5x</td></tr>
+                <tr><td>Tier</td><td>Supermoon</td></tr>
+                <tr><td>Trade Taken</td><td>True</td></tr>
+                <tr><td>Triggered At</td><td>14 seconds</td></tr>
+                <tr><td>Notes</td><td>Profit-in-place detected at +10% at 14s. Supermoon tier hit at 23s.</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2><span class="emoji">📋</span> Token Details: Token6</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td>Token</td><td>DUpNefWd8p8WTvRUT8D5uy55WLS43abaUGwLkbL8pump</td></tr>
+                <tr><td>Launch Timestamp</td><td>2025-05-25T05:36:26Z</td></tr>
+                <tr><td>Initial Price</td><td>$0.017398 (0.0001 SOL)</td></tr>
+                <tr><td>Peak Price</td><td>$0.121786 (0.0007 SOL)</td></tr>
+                <tr><td>Peak Gain</td><td>7.0x</td></tr>
+                <tr><td>Time to Peak</td><td>25 seconds</td></tr>
+                <tr><td>Collapse Time</td><td>50 seconds</td></tr>
+                <tr><td>Buyers (10s)</td><td>18 (estimated)</td></tr>
+                <tr><td>Buyers (30s)</td><td>35 (estimated)</td></tr>
+                <tr><td>Hold Duration</td><td>87 seconds</td></tr>
+                <tr><td>Exit Price</td><td>$0.121786 (0.0007 SOL)</td></tr>
+                <tr><td>Profit Gain</td><td>6.5x</td></tr>
+                <tr><td>Tier</td><td>Black Hole</td></tr>
+                <tr><td>Trade Taken</td><td>True</td></tr>
+                <tr><td>Triggered At</td><td>15 seconds</td></tr>
+                <tr><td>Notes</td><td>Profit-in-place detected at +10% at 15s. Black Hole tier hit at 25s.</td></tr>
+            </table>
+        </div>
+    
+    <div class="section">
+        <h2><span class="emoji">📋</span> Token Details: D1fF3r3nT</h2>
+        <table>
+            <tr><th>Metric</th><th>Value</th></tr>
+            <tr><td>Token</td><td>D1fF3r3nT</td></tr>
+            <tr><td>Launch Timestamp</td><td>2025-05-24T17:22:00Z</td></tr>
+            <tr><td>Initial Price</td><td>$0.00005500</td></tr>
+            <tr><td>Peak Price</td><td>$0.00165000</td></tr>
+            <tr><td>Peak Gain</td><td>30.0x</td></tr>
+            <tr><td>Time to Peak</td><td>46 seconds</td></tr>
+            <tr><td>Collapse Time</td><td>91 seconds</td></tr>
+            <tr><td>Buyers (10s)</td><td>18</td></tr>
+            <tr><td>Buyers (30s)</td><td>35</td></tr>
+            <tr><td>Hold Duration</td><td>87 seconds</td></tr>
+            <tr><td>Exit Price</td><td>$0.00110000</td></tr>
+            <tr><td>Profit Gain</td><td>20.0x</td></tr>
+            <tr><td>Tier</td><td>Supermoon</td></tr>
+            <tr><td>Trade Taken</td><td>True</td></tr>
+            <tr><td>Triggered At</td><td>15 seconds</td></tr>
+            <tr><td>Notes</td><td>Profit-in-place detected at +10% at 15s. Supermoon tier hit at 46s.</td></tr>
+        </table>
+    </div>
+    </div>
+</body>
+</html>
