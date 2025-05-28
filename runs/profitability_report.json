@@ -1,0 +1,54 @@
+[
+  {
+    "timestamp": "2025-05-28 14:44:00",
+    "mintAddress": "3n3fwvMh6bDjohkSkhC2xBwGDXrABDAwF66R4i7Hpump",
+    "vaultAddress": "DRMGxe4gSNmVUxJq9HsiaD6TbuJGyM1R2TGbgRKiVJrM",
+    "entryPrice": null,
+    "exitPrice": null,
+    "profitSol": 0,
+    "profitUsd": 0,
+    "status": "skipped",
+    "buyers10s": 0,
+    "buyers30s": 0,
+    "duration": 0
+  },
+  {
+    "timestamp": "2025-05-28 14:44:00",
+    "mintAddress": "2McSzJ4CodA38jR8WCBpAFHFmMEV1ES59zmEraygpump",
+    "vaultAddress": "6ooJhCjXiEhGqJzho9NAyFNLFNEdc9nDkBMVdMQULVTb",
+    "entryPrice": 8.959154972928166e-10,
+    "exitPrice": 1.1842165307531396e-9,
+    "profitSol": 0.015989744754470753,
+    "profitUsd": 2.739363071335929,
+    "status": "timeout",
+    "buyers10s": 0,
+    "buyers30s": 0,
+    "duration": 139.413
+  },
+  {
+    "timestamp": "2025-05-28 14:44:00",
+    "mintAddress": "3rMtgACkG53spT9Yq15MwNpamYcMkw1uPbHbx4vipump",
+    "vaultAddress": "G6KyEf5LnB7JUx2gBsihLrR8rZZmiNmfW9XULiedHCme",
+    "entryPrice": 7.3223222093784475e-9,
+    "exitPrice": null,
+    "profitSol": 0,
+    "profitUsd": 0,
+    "status": "entered",
+    "buyers10s": 0,
+    "buyers30s": 0,
+    "duration": 0
+  },
+  {
+    "timestamp": "2025-05-28 14:50:35",
+    "mintAddress": "CXqP5ZrmjqJj5C94sXqWx92Qso5yJNKWRjxPE6fkpump",
+    "vaultAddress": "FeWtREj4D5enSciZfXjm7oyfYZ8g8xgWdWuAVqjfP7HK",
+    "entryPrice": null,
+    "exitPrice": null,
+    "profitSol": 0,
+    "profitUsd": 0,
+    "status": "skipped",
+    "buyers10s": 0,
+    "buyers30s": 0,
+    "duration": 0
+  }
+]
