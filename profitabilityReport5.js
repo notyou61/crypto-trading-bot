@@ -1,3 +1,4 @@
+/// profitabilityReport5.js (modified generateProfitabilityReport)
 import { Connection, PublicKey } from '@solana/web3.js';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
@@ -5,10 +6,10 @@ import path from 'path';
 import axios from 'axios';
 import { format } from 'date-fns';
 import nodemailer from 'nodemailer';
+
 import archiver from 'archiver';
-import pLimit from 'p-limit';
-import puppeteer from 'puppeteer';
 import { getSolPrice } from './getSOLPrice.js';
+import cliProgress from 'cli-progress'; // Make sure this is imported
 
 dotenv.config();
 
@@ -73,26 +74,22 @@ const config = {
   PUMP_FUN_PROGRAM: process.env.PUMP_FUN_PROGRAM || '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
   REPORT_JSON_PATH: process.env.REPORT_JSON_PATH || './runs/profitability_report.json',
   REPORT_HTML_PATH: process.env.REPORT_HTML_PATH || './runs/profitability_report.html',
-  REPORT_PDF_PATH: process.env.REPORT_PDF_PATH || './runs/profitability_report.pdf',
+  REPORT_PDF_PATH: process.env.REPORT_PDF_PATH || './runs/profitability_report.pdf', // This path will still be in config but PDF generation code is removed
   FALLBACK_SOL_PRICE: parseFloat(process.env.FALLBACK_SOL_PRICE) || 166.0,
   TRADE_SIZE: parseFloat(process.env.TRADE_SIZE) || 0.05,
   SLIPPAGE: parseFloat(process.env.SLIPPAGE) || 0.03,
   TX_FEE: parseFloat(process.env.TX_FEE) || 0.0001,
-  MAX_HOLD_TIME: parseInt(process.env.MAX_HOLD_TIME) || 180000,
-  MAX_RUNTIME_PER_TOKEN: parseInt(process.env.MAX_RUNTIME_PER_TOKEN) || 180000,
+  MAX_HOLD_TIME: parseInt(process.env.MAX_HOLD_TIME) || 120000,
   EMAIL_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
   EMAIL_PORT: parseInt(process.env.SMTP_PORT) || 587,
   EMAIL_USER: process.env.REPORT_EMAIL_ADDRESS || 'steve.skye.skyelighting@gmail.com',
-  EMAIL_PASS: process.env.REPORT_EMAIL_PASSWORD,
+  EMAIL_PASS: process.env.REPORT_EMAIL_PASSWORD || 'zjsshnmlvrdbwxsl',
   EMAIL_TO: process.env.REPORT_EMAIL_RECIPIENT || 'steve.skye@skyelighting.com',
-  MIN_BUYERS_10S: parseInt(process.env.MIN_BUYERS_10S) || 5,
-  MIN_BUYERS_30S: parseInt(process.env.MIN_BUYERS_30S) || 10,
-  CONCURRENCY_LIMIT: parseInt(process.env.CONCURRENCY_LIMIT) || 5,
 };
 
 // Validate .env
 const requiredVars = ['HELIUS_API_KEY', 'REPORT_JSON_PATH', 'REPORT_HTML_PATH', 'REPORT_EMAIL_ADDRESS', 'REPORT_EMAIL_PASSWORD', 'REPORT_EMAIL_RECIPIENT'];
-const missingVars = requiredVars.filter(v => process.env[v] === undefined);
+const missingVars = requiredVars.filter(v => !process.env[v]);
 if (missingVars.length > 0) {
   console.error(`ERROR: Missing environment variables: ${missingVars.join(', ')}`);
   process.exit(1);
@@ -191,45 +188,27 @@ async function getVaultAddress(mintAddress) {
   }
 }
 
-// Price calculation with EMA
-const priceCache = new Map();
-function calculatePrice(tokenSupply, solInVault) {
+// 📈 calculatePrice.js
+export function calculatePrice(tokenSupply, solInVault) {
   if (tokenSupply <= 0 || solInVault <= 0) {
     console.warn(`WARN: Invalid inputs for price calculation: tokenSupply=${tokenSupply}, solInVault=${solInVault}`);
     return 0;
   }
 
-  const basePrice = solInVault / tokenSupply;
+  const basePrice = solInVault / tokenSupply; // SOL per token
   const curveFactor = Math.log10(tokenSupply / 1_000_000 + 1) * 1.0;
-  const price = basePrice * curveFactor * 1_000_000;
+  const price = basePrice * curveFactor * 1_000_000; // Scaled to avoid underflow
+
   const finalPrice = isNaN(price) || price < 0.00000001 ? 0.00000001 : price;
-  console.log(`DEBUG: Price calc: basePrice=${basePrice.toFixed(8)}, curveFactor=${curveFactor.toFixed(4)}, finalPrice=${finalPrice.toFixed(8)}`);
+  console.log(`DEBUG: Price calc: basePrice=${basePrice}, curveFactor=${curveFactor}, finalPrice=${finalPrice}`);
   return finalPrice;
 }
-
-function getSmoothedPrice(mintAddress, newPrice) {
-  const cache = priceCache.get(mintAddress) || { prices: [], ema: null };
-  cache.prices.push(newPrice);
-  if (cache.prices.length > 5) cache.prices.shift();
-
-  const alpha = 2 / (cache.prices.length + 1);
-  cache.ema = cache.ema
-    ? newPrice * alpha + cache.ema * (1 - alpha)
-    : cache.prices.reduce((sum, p) => sum + p, 0) / cache.prices.length;
-
-  priceCache.set(mintAddress, cache);
-  console.log(`DEBUG: Smoothed price for ${mintAddress}: ${cache.ema.toFixed(8)}`);
-  return cache.ema;
-}
-
-// Fetch buyer stats with quality metrics
+// Fetch buyer stats with pagination
 async function getBuyerStats(mintAddress, startTime) {
   try {
     const mintPubkey = new PublicKey(mintAddress);
     const buyers10s = new Set();
     const buyers30s = new Set();
-    const transfers10s = [];
-    const transfers30s = [];
     let beforeSignature = null;
 
     while (true) {
@@ -244,7 +223,7 @@ async function getBuyerStats(mintAddress, startTime) {
 
         const txTime = sig.blockTime * 1000;
         if (txTime > startTime + 30000) continue;
-        if (txTime < startTime) break;
+        if (txTime < startTime) return summarize();
 
         await rpcLimiter.wait();
         const tx = await connection.getParsedTransaction(sig.signature, { maxSupportedTransactionVersion: 0 });
@@ -260,17 +239,10 @@ async function getBuyerStats(mintAddress, startTime) {
 
         for (const transfer of tokenTransfers) {
           const to = transfer.parsed?.info?.destination;
-          const amount = parseFloat(transfer.parsed?.info?.amount) / 1_000_000;
-          if (!to || to === mintAddress || amount <= 0) continue;
+          if (!to || to === mintAddress) continue;
 
-          if (txTime <= startTime + 10000) {
-            buyers10s.add(to);
-            transfers10s.push(amount);
-          }
-          if (txTime <= startTime + 30000) {
-            buyers30s.add(to);
-            transfers30s.push(amount);
-          }
+          if (txTime <= startTime + 10000) buyers10s.add(to);
+          if (txTime <= startTime + 30000) buyers30s.add(to);
         }
       }
 
@@ -278,24 +250,16 @@ async function getBuyerStats(mintAddress, startTime) {
       if (signatures.length < 1000) break;
     }
 
-    const entropy10s = transfers10s.length ? buyers10s.size / transfers10s.length : 0;
-    const entropy30s = transfers30s.length ? buyers30s.size / transfers30s.length : 0;
-    const meanTransfer10s = transfers10s.length ? transfers10s.reduce((sum, a) => sum + a, 0) / transfers10s.length : 0;
-    const meanTransfer30s = transfers30s.length ? transfers30s.reduce((sum, a) => sum + a, 0) / transfers30s.length : 0;
+    return summarize();
 
-    const stats = {
-      buyers10s: buyers10s.size,
-      buyers30s: buyers30s.size,
-      entropy10s,
-      entropy30s,
-      meanTransfer10s,
-      meanTransfer30s,
-    };
-    console.log(`INFO: Buyer stats for ${mintAddress}: ${stats.buyers10s} (10s), ${stats.buyers30s} (30s), entropy=${stats.entropy30s.toFixed(2)}, meanTransfer=${stats.meanTransfer30s.toFixed(2)}`);
-    return stats;
+    function summarize() {
+      console.log(`INFO: Buyer stats for ${mintAddress}: ${buyers10s.size} (10s), ${buyers30s.size} (30s)`);
+      return { buyers10s: buyers10s.size, buyers30s: buyers30s.size };
+    }
+
   } catch (err) {
     console.warn(`WARN: Failed to fetch buyer stats for ${mintAddress}: ${err.message}`);
-    return { buyers10s: 0, buyers30s: 0, entropy10s: 0, entropy30s: 0, meanTransfer10s: 0, meanTransfer30s: 0 };
+    return { buyers10s: 0, buyers30s: 0 };
   }
 }
 
@@ -308,6 +272,9 @@ async function simulateTrade(mintAddress, startTime) {
     return null;
   }
 
+  let initialPrice = null;
+  let tradeExecuted = false;
+  let timestamp = 0; // Declare at top of scope for tracking entry time
   let tradeLog = {
     timestamp: format(startTime || new Date(), 'yyyy-MM-dd HH:mm:ss'),
     mintAddress: escapeHtml(mintAddress),
@@ -319,32 +286,20 @@ async function simulateTrade(mintAddress, startTime) {
     status: 'skipped',
     buyers10s: 0,
     buyers30s: 0,
-    entropy30s: 0,
-    meanTransfer30s: 0,
     duration: 0,
-    missedOpportunity: false,
   };
 
   const buyerStats = await getBuyerStats(mintAddress, startTime);
   tradeLog.buyers10s = buyerStats.buyers10s;
   tradeLog.buyers30s = buyerStats.buyers30s;
-  tradeLog.entropy30s = buyerStats.entropy30s;
-  tradeLog.meanTransfer30s = buyerStats.meanTransfer30s;
 
-  if (buyerStats.buyers10s < config.MIN_BUYERS_10S || buyerStats.buyers30s < config.MIN_BUYERS_30S) {
-    console.log(`INFO: Skipping trade for ${mintAddress} due to insufficient buyers (${buyerStats.buyers10s}/${buyerStats.buyers30s})`);
+  if (buyerStats.buyers10s < 0) { // Temporary: ≥0 for testing
+    console.log(`INFO: Skipping trade for ${mintAddress} due to insufficient buyers (${buyerStats.buyers10s}/0)`);
     return tradeLog;
   }
 
   const simStart = Date.now();
-  let initialPrice = null;
-  let tradeExecuted = false;
-  let entryTime = 0;
-  let lastPrice = null;
-  let momentumConfirmed = false;
-  const priceHistory = [];
-
-  while (Date.now() - simStart < config.MAX_RUNTIME_PER_TOKEN) {
+  while (Date.now() - simStart < config.MAX_HOLD_TIME) {
     const tokenSupply = await getTokenSupply(mintAddress);
     const solInVault = await getVaultBalance(vaultAddress);
     if (!tokenSupply || !solInVault) {
@@ -353,77 +308,47 @@ async function simulateTrade(mintAddress, startTime) {
       return tradeLog;
     }
 
-    const rawPrice = calculatePrice(tokenSupply, solInVault);
-    const currentPrice = getSmoothedPrice(mintAddress, rawPrice);
-    priceHistory.push({ time: Date.now(), price: currentPrice });
-    console.log(`INFO: Smoothed price for ${mintAddress}: ${currentPrice.toFixed(8)} SOL`);
-
+    const currentPrice = calculatePrice(tokenSupply, solInVault);
+    console.log(`INFO: Current price for ${mintAddress}: ${currentPrice.toFixed(8)} SOL`);
     if (!initialPrice) initialPrice = currentPrice;
 
-    if (!tradeExecuted) {
-      if (lastPrice && currentPrice >= initialPrice * 1.10) {
-        const momentumGain = (currentPrice / lastPrice - 1) * 100;
-        if (momentumGain >= 5) momentumConfirmed = true;
-      }
-      if (momentumConfirmed && currentPrice >= 0.0000001) {
-        tradeExecuted = true;
-        tradeLog.entryPrice = currentPrice;
-        tradeLog.status = 'entered';
-        entryTime = Date.now();
-        console.log(`INFO: [Simulated] Buying ${mintAddress} at ${currentPrice.toFixed(8)} SOL`);
-      }
+    // Check if we should enter the trade
+    if (!tradeExecuted && currentPrice >= initialPrice * 1.10 && currentPrice >= 0.0000001) {
+      tradeExecuted = true;
+      tradeLog.entryPrice = currentPrice;
+      tradeLog.status = 'entered';
+      timestamp = Date.now(); // Track entry time
+      console.log(`INFO: [Simulated] Buying ${mintAddress} at ${currentPrice.toFixed(8)} SOL`);
     }
 
+    // Simulate trade execution
     if (tradeExecuted && tradeLog.status === 'entered') {
-      const heldDuration = Date.now() - entryTime;
-      const priceGain = (currentPrice / tradeLog.entryPrice - 1) * 100;
+      const heldDuration = Date.now() - timestamp; // in ms
 
+      // Strategy v3 logic
       if (currentPrice >= tradeLog.entryPrice * 3.0 && heldDuration >= 60000) {
         tradeLog.exitPrice = currentPrice;
         tradeLog.status = 'moonshot_exit';
         tradeLog.duration = Math.round(heldDuration / 1000);
-        tradeLog.profitSol = (currentPrice - tradeLog.entryPrice) * (config.TRADE_SIZE / tradeLog.entryPrice) * (1 - config.SLIPPAGE) - config.TX_FEE;
+        tradeLog.profitSol = currentPrice - tradeLog.entryPrice;
         tradeLog.profitUsd = tradeLog.profitSol * solPrice;
         console.log(`✅ Exiting ${mintAddress} at +200% after ${tradeLog.duration}s`);
         break;
-      } else if (heldDuration >= 120000 || currentPrice >= tradeLog.entryPrice * 1.5) {
-        const recentPrices = priceHistory.slice(-2);
-        const isClimbing = recentPrices.length === 2 && recentPrices[1].price >= recentPrices[0].price * 1.10;
-        if (isClimbing && heldDuration < 150000) {
-          console.log(`INFO: Extending hold for ${mintAddress} due to climbing price`);
-          continue;
-        }
+      } else if (
+        currentPrice >= tradeLog.entryPrice * 1.5 || // +50%
+        heldDuration >= 120000 // or held 120s max
+      ) {
         tradeLog.exitPrice = currentPrice;
         tradeLog.status = 'fallback_exit';
         tradeLog.duration = Math.round(heldDuration / 1000);
-        tradeLog.profitSol = (currentPrice - tradeLog.entryPrice) * (config.TRADE_SIZE / tradeLog.entryPrice) * (1 - config.SLIPPAGE) - config.TX_FEE;
+        tradeLog.profitSol = currentPrice - tradeLog.entryPrice;
         tradeLog.profitUsd = tradeLog.profitSol * solPrice;
         console.log(`⚠️ Exiting ${mintAddress} at fallback after ${tradeLog.duration}s`);
         break;
       }
     }
 
-    lastPrice = currentPrice;
     await new Promise(resolve => setTimeout(resolve, 5000));
-  }
-
-  // Check for missed moonshots
-  if (tradeLog.status !== 'moonshot_exit') {
-    const postExitStart = Date.now();
-    while (Date.now() - postExitStart < 180000) {
-      const tokenSupply = await getTokenSupply(mintAddress);
-      const solInVault = await getVaultBalance(vaultAddress);
-      if (tokenSupply && solInVault) {
-        const rawPrice = calculatePrice(tokenSupply, solInVault);
-        const currentPrice = getSmoothedPrice(mintAddress, rawPrice);
-        if (currentPrice >= tradeLog.entryPrice * 4.0) {
-          tradeLog.missedOpportunity = true;
-          console.log(`WARN: Missed moonshot for ${mintAddress}: reached ${currentPrice.toFixed(8)} SOL`);
-          break;
-        }
-      }
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    }
   }
 
   return tradeLog;
@@ -431,17 +356,34 @@ async function simulateTrade(mintAddress, startTime) {
 
 // Generate HTML report
 async function generateHtmlReport(trades, snowball) {
+  const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+  const htmlReportPath = config.REPORT_HTML_PATH.replace('.html', `_${timestamp}.html`);
+
   const html = `
     <!DOCTYPE html>
     <html>
     <head>
       <title>Pumpiyo Sniper Bot Profitability Report</title>
       <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .summary { margin-bottom: 20px; }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        .summary { background-color: #ecf0f1; border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .summary p { margin: 5px 0; font-size: 1.1em; }
+        .summary strong { color: #34495e; }
+        table { border-collapse: collapse; width: 100%; background-color: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; }
+        th { background-color: #3498db; color: white; text-transform: uppercase; font-size: 0.9em; }
+        tbody tr:nth-child(even) { background-color: #f9f9f9; }
+        tbody tr:hover { background-color: #f1f1f1; }
+        .tier-1 { background-color: #d4edda; } /* Green for high profit */
+        .tier-2 { background-color: #fff3cd; } /* Yellow for moderate profit */
+        .tier-3 { background-color: #f8d7da; } /* Red for loss/low profit */
+        .status-entered { color: #28a745; font-weight: bold; }
+        .status-moonshot_exit { color: #6f42c1; font-weight: bold; }
+        .status-fallback_exit { color: #ffc107; font-weight: bold; }
+        .status-skipped, .status-failed { color: #dc3545; font-weight: bold; }
+        a { color: #3498db; text-decoration: none; }
+        a:hover { text-decoration: underline; }
       </style>
     </head>
     <body>
@@ -450,7 +392,6 @@ async function generateHtmlReport(trades, snowball) {
         <p><strong>Generated:</strong> ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}</p>
         <p><strong>Total Trades:</strong> ${trades.length}</p>
         <p><strong>Successful Trades:</strong> ${trades.filter(t => t.profitSol > 0).length}</p>
-        <p><strong>Missed Moonshots:</strong> ${trades.filter(t => t.missedOpportunity).length}</p>
         <p><strong>Total Profit:</strong> ${trades.reduce((sum, t) => sum + t.profitSol, 0).toFixed(4)} SOL</p>
         <p><strong>Snowball Bankroll:</strong> ${snowball.bankroll.toFixed(2)} SOL</p>
         <p><strong>Win Rate:</strong> ${((trades.filter(t => t.profitSol > 0).length / trades.length) * 100 || 0).toFixed(2)}%</p>
@@ -468,44 +409,55 @@ async function generateHtmlReport(trades, snowball) {
             <th>Profit (SOL)</th>
             <th>Profit (USD)</th>
             <th>Buyers (10s/30s)</th>
-            <th>Entropy (30s)</th>
-            <th>Mean Transfer (30s)</th>
             <th>Duration (s)</th>
-            <th>Missed Moonshot</th>
+            <th>Reason/Tier</th>
           </tr>
         </thead>
         <tbody>
-          ${trades.map(t => `
-            <tr>
-              <td>${escapeHtml(t.timestamp)}</td>
-              <td>${escapeHtml(t.mintAddress)}</td>
-              <td>${escapeHtml(t.status)}</td>
-              <td>${t.entryPrice?.toFixed(8) || '-'}</td>
-              <td>${t.exitPrice?.toFixed(8) || '-'}</td>
-              <td>${t.profitSol.toFixed(4)}</td>
-              <td>${t.profitUsd.toFixed(2)}</td>
-              <td>${t.buyers10s}/${t.buyers30s}</td>
-              <td>${t.entropy30s.toFixed(2)}</td>
-              <td>${t.meanTransfer30s.toFixed(2)}</td>
-              <td>${(t.duration || 0).toFixed(2)}</td>
-              <td>${t.missedOpportunity ? 'Yes' : 'No'}</td>
-            </tr>
-          `).join('')}
+          ${trades.map(t => {
+            let rowClass = '';
+            let reason = '';
+            let roi = (t.profitSol / config.TRADE_SIZE) * 100;
+
+            if (t.status === 'moonshot_exit') {
+              rowClass = 'tier-1';
+              reason = 'Moonshot Exit (+200% ROI)';
+            } else if (t.status === 'fallback_exit' && t.profitSol > 0) {
+              rowClass = 'tier-2';
+              reason = 'Fallback Exit (Positive ROI)';
+            } else if (t.status === 'entered' && t.profitSol > 0) {
+              rowClass = 'tier-2';
+              reason = 'Active Trade (Positive ROI)';
+            } else {
+              rowClass = 'tier-3';
+              reason = 'Skipped/Failed/Loss';
+            }
+
+            return `
+              <tr class="${rowClass}">
+                <td>${escapeHtml(t.timestamp)}</td>
+                <td><a href="https://pump.fun/${escapeHtml(t.mintAddress)}" target="_blank">${escapeHtml(t.mintAddress.substring(0, 6))}...</a></td>
+                <td class="status-${t.status}">${escapeHtml(t.status)}</td>
+                <td>${t.entryPrice?.toFixed(8) || '-'}</td>
+                <td>${t.exitPrice?.toFixed(8) || '-'}</td>
+                <td>${t.profitSol.toFixed(4)}</td>
+                <td>${t.profitUsd.toFixed(2)}</td>
+                <td>${t.buyers10s}/${t.buyers30s}</td>
+                <td>${(t.duration || 0).toFixed(2)}</td>
+                <td>${reason}</td>
+              </tr>
+            `;
+          }).join('')}
         </tbody>
       </table>
     </body>
     </html>
   `;
-  await fs.mkdir(path.dirname(config.REPORT_HTML_PATH), { recursive: true });
-  await fs.writeFile(config.REPORT_HTML_PATH, html);
-  console.log(`INFO: HTML report saved to ${config.REPORT_HTML_PATH}`);
-
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
-  await page.setContent(html);
-  await page.pdf({ path: config.REPORT_PDF_PATH, format: 'A4' });
-  await browser.close();
-  console.log(`INFO: PDF report saved to ${config.REPORT_PDF_PATH}`);
+  await fs.mkdir(path.dirname(htmlReportPath), { recursive: true });
+  await fs.writeFile(htmlReportPath, html);
+  console.log(`INFO: HTML report saved to ${htmlReportPath}`);
+  // Removed PDF generation to avoid 'html-pdf-node' dependency issues
+  console.log('INFO: PDF report generation skipped due to previous errors.');
 }
 
 // Zip reports
@@ -513,10 +465,16 @@ async function zipReports() {
   const output = fs.createWriteStream('./runs/reports.zip');
   const archive = archiver('zip', { zlib: { level: 9 } });
   archive.pipe(output);
+
+  // Use a wildcard or find the latest generated HTML for zipping
+  const filesInRuns = await fs.readdir('./runs');
+  const latestHtml = filesInRuns.filter(f => f.startsWith('profitability_report_') && f.endsWith('.html')).sort().pop();
+
+  // Add all relevant files to the zip
   archive.file(config.REPORT_JSON_PATH, { name: 'profitability_report.json' });
-  archive.file(config.REPORT_HTML_PATH, { name: 'profitability_report.html' });
-  archive.file(config.REPORT_PDF_PATH, { name: 'profitability_report.pdf' });
+  if (latestHtml) archive.file(path.join('./runs', latestHtml), { name: latestHtml });
   archive.file('./runs/analyzed_tokens.json', { name: 'analyzed_tokens.json' });
+
   await archive.finalize();
   console.log('INFO: Reports zipped to ./runs/reports.zip');
 }
@@ -542,7 +500,7 @@ async function sendReportEmail(summary) {
     from: config.EMAIL_USER,
     to: config.EMAIL_TO,
     subject: 'Pumpiyo Sniper Bot Profitability Report',
-    text: `Generated: ${summary.generated}\nTotal Trades: ${summary.totalTrades}\nSuccessful Trades: ${summary.successfulTrades}\nMissed Moonshots: ${summary.missedMoonshots}\nTotal Profit: ${summary.totalProfit} SOL\nSnowball Bankroll: ${summary.bankroll} SOL\n\nView report: ${config.REPORT_HTML_PATH}`,
+    text: `Generated: ${summary.generated}\nTotal Trades: ${summary.totalTrades}\nSuccessful Trades: ${summary.successfulTrades}\nTotal Profit: ${summary.totalProfit} SOL\nSnowball Bankroll: ${summary.bankroll} SOL\n\nView report: ${config.REPORT_HTML_PATH}`,
   };
 
   try {
@@ -589,7 +547,6 @@ async function generateInterimReport(trades) {
     generated: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
     totalTrades: trades.length,
     successfulTrades: trades.filter(t => t.profitSol > 0).length,
-    missedMoonshots: trades.filter(t => t.missedOpportunity).length,
     totalProfit: trades.reduce((sum, t) => sum + t.profitSol, 0).toFixed(4),
     bankroll: snowball.bankroll.toFixed(2),
   };
@@ -598,65 +555,18 @@ async function generateInterimReport(trades) {
   console.log(`INFO: Interim report generated with ${trades.length} trades`);
 }
 
-// Monitor live trades
-async function generateProfitabilityReport() {
-  console.log('INFO: Starting profitability report generation...');
-  connection = await getConnection();
-  const url = `https://api.helius.xyz/v0/addresses/${config.PUMP_FUN_PROGRAM}/transactions?api-key=${config.HELIUS_API_KEY}`;
-  const seen = new Set();
-  let trades = [];
-  const analyzedTokens = [];
-  const limit = pLimit(config.CONCURRENCY_LIMIT);
+// profitabilityReport5.js (modified generateProfitabilityReport)
+import { Connection, PublicKey } from '@solana/web3.js';
+import dotenv from 'dotenv';
+import fs from 'fs/promises';
+import path from 'path';
+import axios from 'axios';
+import { format } from 'date-fns';
+import nodemailer from 'nodemailer';
 
-  const startTime = Date.now();
-  const durationMs = 60 * 60 * 1000;
-  let lastReportTime = startTime;
-  while (Date.now() - startTime < durationMs) {
-    try {
-      const txs = await throttledGet(url);
-      console.log(`INFO: Fetched ${txs.length} transactions`);
-      const tradePromises = [];
-      for (const tx of txs) {
-        const transfer = tx.tokenTransfers?.find(t => t.mint?.endsWith('pump') && !seen.has(t.mint));
-        if (!transfer?.mint) continue;
-
-        seen.add(transfer.mint);
-        analyzedTokens.push({ mint: transfer.mint, timestamp: tx.timestamp });
-        console.log(`INFO: Analyzing token: ${transfer.mint}`);
-        tradePromises.push(
-          limit(() => simulateTrade(transfer.mint, tx.timestamp * 1000).then(tradeLog => tradeLog && trades.push(tradeLog)))
-        );
-      }
-
-      await Promise.all(tradePromises);
-
-      if (trades.length >= 5 || Date.now() - lastReportTime >= 5 * 60 * 1000) {
-        await generateInterimReport(trades);
-        await fs.writeFile('./runs/analyzed_tokens.json', JSON.stringify(analyzedTokens, null, 2));
-        console.log(`INFO: Saved ${analyzedTokens.length} analyzed tokens`);
-        trades = [];
-        lastReportTime = Date.now();
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    } catch (err) {
-      console.error(`ERROR: Failed to fetch transactions: ${err.message}`);
-      if (err.response?.status === 429) {
-        console.warn('INFO: Switching RPC due to 429 error');
-        currentRpcIndex = (currentRpcIndex + 1) % config.RPC_ENDPOINTS.length;
-        connection = await getConnection();
-      }
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    }
-  }
-
-  if (trades.length > 0) {
-    await generateInterimReport(trades);
-    await fs.writeFile('./runs/analyzed_tokens.json', JSON.stringify(analyzedTokens, null, 2));
-  }
-
-  console.log('INFO: Report generation complete');
-}
+import archiver from 'archiver';
+import { getSolPrice } from './getSOLPrice.js';
+import cliProgress from 'cli-progress'; // Make sure this is imported
 
 // Backtest historical data
 async function generateProfitabilityReportFromHistory(filePath) {
@@ -667,25 +577,38 @@ async function generateProfitabilityReportFromHistory(filePath) {
     if (!data.length) throw new Error('No tokens in historical data');
     let trades = [];
     const analyzedTokens = [];
-    const limit = pLimit(config.CONCURRENCY_LIMIT);
 
-    const tradePromises = data.map(({ mint, timestamp }) =>
-      limit(async () => {
-        console.log(`INFO: Analyzing historical token: ${mint}`);
-        try {
-          analyzedTokens.push({ mint, timestamp });
-          const tradeLog = await simulateTrade(mint, timestamp);
-          if (tradeLog) trades.push(tradeLog);
-        } catch (err) {
-          console.warn(`WARN: Failed to analyze ${mint}: ${err.message}`);
-        }
-      })
-    );
+    // Initialize progress bar for historical data
+    const bar = new cliProgress.SingleBar({
+      format: 'Progress | {bar} | {percentage}% || Tokens: {value}/{total} || Profit: {profitSol} SOL',
+      barCompleteChar: '\u2588',
+      barIncompleteChar: '\u2591',
+      hideCursor: true,
+      stopOnComplete: true // Stop the bar when it reaches 100%
+    });
 
-    await Promise.all(tradePromises);
+    bar.start(data.length, 0, { profitSol: 0 });
+
+    for (const { mint, timestamp } of data) {
+      console.log(`INFO: Analyzing historical token: ${mint}`);
+      try {
+        analyzedTokens.push({ mint, timestamp });
+        const tradeLog = await simulateTrade(mint, timestamp);
+        if (tradeLog) trades.push(tradeLog);
+
+        // Update progress bar
+        bar.increment({
+          profitSol: trades.reduce((sum, t) => sum + t.profitSol, 0).toFixed(4)
+        });
+
+      } catch (err) {
+        console.warn(`WARN: Failed to analyze ${mint}: ${err.message}`);
+      }
+    }
     console.log(`INFO: Processed ${trades.length} trades`);
     await fs.writeFile('./runs/analyzed_tokens.json', JSON.stringify(analyzedTokens, null, 2));
     await generateInterimReport(trades);
+    bar.stop(); // Stop the progress bar at the end
     console.log('INFO: Historical report generation complete');
   } catch (err) {
     console.error(`ERROR: Failed to process historical data: ${err.message}`);
@@ -699,7 +622,7 @@ async function generateProfitabilityReportFromHistory(filePath) {
     if (process.argv.includes('--fetch-latest')) {
       console.log('INFO: Fetching latest 100 tokens...');
       const url = `https://api.helius.xyz/v0/addresses/${config.PUMP_FUN_PROGRAM}/transactions?api-key=${config.HELIUS_API_KEY}`;
-      const cutoff = Date.now() - 3 * 24 * 60 * 60 * 1000;
+      const cutoff = Date.now() - 3 * 24 * 60 * 60 * 1000; // Last 3 days
       try {
         const txs = await throttledGet(url);
         const launches = txs
@@ -709,7 +632,7 @@ async function generateProfitabilityReportFromHistory(filePath) {
             timestamp: tx.timestamp * 1000,
           }))
           .filter(t => t.timestamp >= cutoff)
-          .slice(0, 100);
+          .slice(0, 100); // Limit to 100 tokens
         console.log(`INFO: Fetched ${launches.length} token launches`);
         if (!launches.length) throw new Error('No recent token launches found');
 
