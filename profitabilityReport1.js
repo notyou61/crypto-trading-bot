@@ -187,65 +187,77 @@ async function getVaultAddress(mintAddress) {
   }
 }
 
-// Calculate token price
-function calculatePrice(tokenSupply, solInVault) {
-  const basePrice = solInVault / tokenSupply;
-  const curveFactor = Math.log10(tokenSupply / 1_000_000 + 1) * 0.1;
-  return basePrice * curveFactor;
-}
+// 📈 calculatePrice.js
+export function calculatePrice(tokenSupply, solInVault) {
+  if (tokenSupply <= 0 || solInVault <= 0) {
+    console.warn(`WARN: Invalid inputs for price calculation: tokenSupply=${tokenSupply}, solInVault=${solInVault}`);
+    return 0;
+  }
 
-// Fetch buyer stats
+  const basePrice = solInVault / tokenSupply; // SOL per token
+  const curveFactor = Math.log10(tokenSupply / 1_000_000 + 1) * 1.0;
+  const price = basePrice * curveFactor * 1_000_000; // Scaled to avoid underflow
+
+  const finalPrice = isNaN(price) || price < 0.00000001 ? 0.00000001 : price;
+  console.log(`DEBUG: Price calc: basePrice=${basePrice}, curveFactor=${curveFactor}, finalPrice=${finalPrice}`);
+  return finalPrice;
+}
+// Fetch buyer stats with pagination
 async function getBuyerStats(mintAddress, startTime) {
   try {
-    await rpcLimiter.wait();
     const mintPubkey = new PublicKey(mintAddress);
-    const signatures = await connection.getSignaturesForAddress(mintPubkey, { limit: 2000 });
-    console.log(`INFO: Found ${signatures.length} signatures for ${mintAddress}`);
-    if (!signatures.length) {
-      console.log(`INFO: No transactions found for ${mintAddress}, assuming 0 buyers`);
-      return { buyers10s: 0, buyers30s: 0 };
-    }
+    const buyers10s = new Set();
+    const buyers30s = new Set();
+    let beforeSignature = null;
 
-    const transfers = [];
-    for (const sig of signatures) {
-      if (sig.blockTime * 1000 < startTime || sig.blockTime * 1000 > startTime + 30000) continue;
+    while (true) {
       await rpcLimiter.wait();
-      const tx = await connection.getParsedTransaction(sig.signature, { maxSupportedTransactionVersion: 0 });
-      if (!tx) continue;
+      const options = beforeSignature ? { limit: 1000, before: beforeSignature } : { limit: 1000 };
+      const signatures = await connection.getSignaturesForAddress(mintPubkey, options);
 
-      const tokenTransfers = tx.meta?.innerInstructions?.flatMap(ii =>
-        ii.instructions.filter(i =>
-          i.programId.toString() === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' &&
-          i.parsed?.type === 'transfer' &&
-          i.parsed?.info?.mint === mintAddress
-        )
-      ) || [];
+      if (!signatures.length) break;
 
-      for (const transfer of tokenTransfers) {
-        transfers.push({
-          timestamp: sig.blockTime,
-          toUserAccount: transfer.parsed.info.destination,
-        });
+      for (const sig of signatures) {
+        if (!sig.blockTime) continue;
+
+        const txTime = sig.blockTime * 1000;
+        if (txTime > startTime + 30000) continue;
+        if (txTime < startTime) return summarize();
+
+        await rpcLimiter.wait();
+        const tx = await connection.getParsedTransaction(sig.signature, { maxSupportedTransactionVersion: 0 });
+        if (!tx) continue;
+
+        const tokenTransfers = (tx.meta?.innerInstructions ?? []).flatMap(ii =>
+          ii.instructions.filter(i =>
+            i.programId.toString() === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' &&
+            i.parsed?.type === 'transfer' &&
+            i.parsed?.info?.mint === mintAddress
+          )
+        );
+
+        for (const transfer of tokenTransfers) {
+          const to = transfer.parsed?.info?.destination;
+          if (!to || to === mintAddress) continue;
+
+          if (txTime <= startTime + 10000) buyers10s.add(to);
+          if (txTime <= startTime + 30000) buyers30s.add(to);
+        }
       }
+
+      beforeSignature = signatures[signatures.length - 1].signature;
+      if (signatures.length < 1000) break;
     }
 
-    const buyers10s = new Set(
-      transfers
-        .filter(t => t.timestamp * 1000 >= startTime && t.timestamp * 1000 <= startTime + 10000)
-        .filter(t => t.toUserAccount !== mintAddress)
-        .map(t => t.toUserAccount)
-    ).size;
-    const buyers30s = new Set(
-      transfers
-        .filter(t => t.timestamp * 1000 >= startTime && t.timestamp * 1000 <= startTime + 30000)
-        .filter(t => t.toUserAccount !== mintAddress)
-        .map(t => t.toUserAccount)
-    ).size;
+    return summarize();
 
-    console.log(`INFO: Buyer stats for ${mintAddress}: ${buyers10s} (10s), ${buyers30s} (30s)`);
-    return { buyers10s, buyers30s };
+    function summarize() {
+      console.log(`INFO: Buyer stats for ${mintAddress}: ${buyers10s.size} (10s), ${buyers30s.size} (30s)`);
+      return { buyers10s: buyers10s.size, buyers30s: buyers30s.size };
+    }
+
   } catch (err) {
-    console.warn(`WARN: Failed to fetch buyer stats for ${mintAddress}: ${err.message}, assuming 0 buyers`);
+    console.warn(`WARN: Failed to fetch buyer stats for ${mintAddress}: ${err.message}`);
     return { buyers10s: 0, buyers30s: 0 };
   }
 }
@@ -261,6 +273,7 @@ async function simulateTrade(mintAddress, startTime) {
 
   let initialPrice = null;
   let tradeExecuted = false;
+  let timestamp = 0; // Declare at top of scope for tracking entry time
   let tradeLog = {
     timestamp: format(startTime || new Date(), 'yyyy-MM-dd HH:mm:ss'),
     mintAddress: escapeHtml(mintAddress),
@@ -298,32 +311,38 @@ async function simulateTrade(mintAddress, startTime) {
     console.log(`INFO: Current price for ${mintAddress}: ${currentPrice.toFixed(8)} SOL`);
     if (!initialPrice) initialPrice = currentPrice;
 
-    if (!tradeExecuted && currentPrice >= initialPrice * 1.10) {
+    // Check if we should enter the trade
+    if (!tradeExecuted && currentPrice >= initialPrice * 1.10 && currentPrice >= 0.0000001) {
       tradeExecuted = true;
       tradeLog.entryPrice = currentPrice;
       tradeLog.status = 'entered';
+      timestamp = Date.now(); // Track entry time
       console.log(`INFO: [Simulated] Buying ${mintAddress} at ${currentPrice.toFixed(8)} SOL`);
     }
 
-    if (tradeExecuted) {
-      const priceGain = (currentPrice / tradeLog.entryPrice - 1) * 100;
-      const holdTime = (Date.now() - simStart) / 1000;
+    // Simulate trade execution
+    if (tradeExecuted && tradeLog.status === 'entered') {
+      const heldDuration = Date.now() - timestamp; // in ms
 
-      if (priceGain >= 200 && holdTime >= 60) {
+      // Strategy v3 logic
+      if (currentPrice >= tradeLog.entryPrice * 3.0 && heldDuration >= 60000) {
         tradeLog.exitPrice = currentPrice;
-        tradeLog.profitSol = (currentPrice - tradeLog.entryPrice) * (config.TRADE_SIZE / tradeLog.entryPrice) - config.TX_FEE;
+        tradeLog.status = 'moonshot_exit';
+        tradeLog.duration = Math.round(heldDuration / 1000);
+        tradeLog.profitSol = currentPrice - tradeLog.entryPrice;
         tradeLog.profitUsd = tradeLog.profitSol * solPrice;
-        tradeLog.status = 'moonshot';
-        tradeLog.duration = holdTime;
-        console.log(`INFO: [Simulated] Moonshot exit: ${tradeLog.profitSol.toFixed(4)} SOL`);
+        console.log(`✅ Exiting ${mintAddress} at +200% after ${tradeLog.duration}s`);
         break;
-      } else if (priceGain >= 50 || holdTime >= 120) {
+      } else if (
+        currentPrice >= tradeLog.entryPrice * 1.5 || // +50%
+        heldDuration >= 120000 // or held 120s max
+      ) {
         tradeLog.exitPrice = currentPrice;
-        tradeLog.profitSol = (currentPrice - tradeLog.entryPrice) * (config.TRADE_SIZE / tradeLog.entryPrice) - config.TX_FEE;
+        tradeLog.status = 'fallback_exit';
+        tradeLog.duration = Math.round(heldDuration / 1000);
+        tradeLog.profitSol = currentPrice - tradeLog.entryPrice;
         tradeLog.profitUsd = tradeLog.profitSol * solPrice;
-        tradeLog.status = priceGain >= 50 ? 'partial' : 'timeout';
-        tradeLog.duration = holdTime;
-        console.log(`INFO: [Simulated] ${tradeLog.status} exit: ${tradeLog.profitSol.toFixed(4)} SOL`);
+        console.log(`⚠️ Exiting ${mintAddress} at fallback after ${tradeLog.duration}s`);
         break;
       }
     }
