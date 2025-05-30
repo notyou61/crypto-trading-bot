@@ -1,17 +1,80 @@
-import axios from 'axios';
-export async function getSolPrice() {
+// getSolPrice.js
+import fetch from 'node-fetch';
+
+// Cache object to store SOL price and timestamp
+let cachedPrice = null;
+let lastFetchTime = 0;
+const CACHE_DURATION = 600000; // Cache for 10 minutes
+const RETRY_DELAY = 20000; // 20 seconds delay for retries
+const MAX_RETRIES = 3;
+
+async function fetchCoinGeckoPrice() {
   try {
-    const res = await axios.get('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', {
-      headers: { 'User-Agent': 'PumpiyoBot/1.0' }
-    });
-    const solPrice = parseFloat(res.data.solana.usd);
-    console.log('💰 Current SOL Price (USD):', solPrice.toFixed(2));
-    return solPrice;
+    const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+    if (!response.ok) {
+      throw new Error(`CoinGecko request failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    return data.solana.usd;
   } catch (err) {
-    console.error('❌ Failed to fetch SOL price:', err.message);
+    console.error(`CoinGecko error: ${err.message}`);
     return null;
   }
 }
-if (process.argv[1].includes('getSOLPrice.js')) {
-  getSolPrice();
+
+async function fetchBirdeyePrice() {
+  try {
+    const response = await fetch('https://public-api.birdeye.so/public/price?address=So11111111111111111111111111111111111111112', {
+      headers: { 'X-API-KEY': process.env.BIRDEYE_API_KEY || 'a15eb8c70f8643a39b325c26910e5c90' },
+    });
+    if (!response.ok) {
+      throw new Error(`Birdeye request failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    return data.data.value;
+  } catch (err) {
+    console.error(`Birdeye error: ${err.message}`);
+    return null;
+  }
+}
+
+export async function getSolPrice() {
+  const now = Date.now();
+
+  // Return cached price if still valid
+  if (cachedPrice && now - lastFetchTime < CACHE_DURATION) {
+    return cachedPrice;
+  }
+
+  // Try CoinGecko with retries
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const price = await fetchCoinGeckoPrice();
+    if (price) {
+      cachedPrice = price;
+      lastFetchTime = now;
+      return cachedPrice;
+    }
+    if (attempt < MAX_RETRIES) {
+      console.warn(`CoinGecko retry (${attempt}/${MAX_RETRIES}) after ${RETRY_DELAY}ms...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+    }
+  }
+
+  // Fallback to Birdeye
+  console.warn('CoinGecko failed, falling back to Birdeye API');
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const price = await fetchBirdeyePrice();
+    if (price) {
+      cachedPrice = price;
+      lastFetchTime = now;
+      return cachedPrice;
+    }
+    if (attempt < MAX_RETRIES) {
+      console.warn(`Birdeye retry (${attempt}/${MAX_RETRIES}) after ${RETRY_DELAY}ms...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+    }
+  }
+
+  console.error('Failed to fetch SOL price from all sources');
+  return null;
 }

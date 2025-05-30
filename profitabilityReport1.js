@@ -1,16 +1,27 @@
-// profitabilityReport1.js
+// profitabilityReport5.js
+
 import { Connection, PublicKey } from '@solana/web3.js';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
 import { format } from 'date-fns';
-import nodemailer from 'nodemailer';
-
-import archiver from 'archiver';
+import cliProgress from 'cli-progress';
 import { getSolPrice } from './getSOLPrice.js';
 
 dotenv.config();
+
+// Configuration
+const config = {
+  RPC_ENDPOINT: process.env.RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com',
+  HELIUS_API_KEY: process.env.HELIUS_API_KEY,
+  PUMP_FUN_PROGRAM: process.env.PUMP_FUN_PROGRAM || '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
+  REPORT_JSON_PATH: './runs/profitability_report.json',
+  REPORT_HTML_PATH: './runs/profitability_report.html',
+  TRADE_SIZE: 0.05,
+  TX_FEE: 0.0001,
+  MAX_HOLD_TIME: 120000,
+};
 
 // Rate limiter
 class RateLimiter {
@@ -53,86 +64,49 @@ async function throttledGet(url, options = {}, retries = 3) {
 
 // Escape HTML
 function escapeHtml(text) {
-  const map = new Map([
-    ['&', '&amp;'],
-    ['<', '&lt;'],
-    ['>', '&gt;'],
-    ['"', '&quot;'],
-    ["'", '&#039;'],
-  ]);
-  return text.replace(/[&<>"']/g, char => map.get(char));
-}
-
-// Configuration
-const config = {
-  RPC_ENDPOINTS: [
-    process.env.RPC_ENDPOINT_1 || 'https://mainnet.helius-rpc.com/?api-key=82256758-538e-4d1a-a827-39d8a176c540',
-    process.env.RPC_ENDPOINT_3 || 'https://chaotic-rough-gadget.solana-mainnet.quiknode.pro/b96d9392b154ac9decb744e59a4274d3dde0d8fc',
-  ],
-  HELIUS_API_KEY: process.env.HELIUS_API_KEY || '82256758-538e-4d1a-a827-39d8a176c540',
-  PUMP_FUN_PROGRAM: process.env.PUMP_FUN_PROGRAM || '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
-  REPORT_JSON_PATH: process.env.REPORT_JSON_PATH || './runs/profitability_report.json',
-  REPORT_HTML_PATH: process.env.REPORT_HTML_PATH || './runs/profitability_report.html',
-  REPORT_PDF_PATH: process.env.REPORT_PDF_PATH || './runs/profitability_report.pdf',
-  FALLBACK_SOL_PRICE: parseFloat(process.env.FALLBACK_SOL_PRICE) || 166.0,
-  TRADE_SIZE: parseFloat(process.env.TRADE_SIZE) || 0.05,
-  SLIPPAGE: parseFloat(process.env.SLIPPAGE) || 0.03,
-  TX_FEE: parseFloat(process.env.TX_FEE) || 0.0001,
-  MAX_HOLD_TIME: parseInt(process.env.MAX_HOLD_TIME) || 120000,
-  EMAIL_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
-  EMAIL_PORT: parseInt(process.env.SMTP_PORT) || 587,
-  EMAIL_USER: process.env.REPORT_EMAIL_ADDRESS || 'steve.skye.skyelighting@gmail.com',
-  EMAIL_PASS: process.env.REPORT_EMAIL_PASSWORD || 'zjsshnmlvrdbwxsl',
-  EMAIL_TO: process.env.REPORT_EMAIL_RECIPIENT || 'steve.skye@skyelighting.com',
-};
-
-// Validate .env
-const requiredVars = ['HELIUS_API_KEY', 'REPORT_JSON_PATH', 'REPORT_HTML_PATH', 'REPORT_EMAIL_ADDRESS', 'REPORT_EMAIL_PASSWORD', 'REPORT_EMAIL_RECIPIENT'];
-const missingVars = requiredVars.filter(v => !process.env[v]);
-if (missingVars.length > 0) {
-  console.error(`ERROR: Missing environment variables: ${missingVars.join(', ')}`);
-  process.exit(1);
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  };
+  return text.replace(/[&<>"']/g, char => map[char]);
 }
 
 // Initialize connection
 let connection;
-let currentRpcIndex = 0;
 async function getConnection() {
-  for (let i = 0; i < config.RPC_ENDPOINTS.length; i++) {
-    const endpoint = config.RPC_ENDPOINTS[(currentRpcIndex + i) % config.RPC_ENDPOINTS.length];
-    try {
-      connection = new Connection(endpoint, 'confirmed');
-      await rpcLimiter.wait();
-      const version = await connection.getVersion();
-      console.log(`INFO: Connected to RPC: ${endpoint}, Solana version: ${version['solana-core']}`);
-      currentRpcIndex = (currentRpcIndex + i) % config.RPC_ENDPOINTS.length;
-      return connection;
-    } catch (err) {
-      console.warn(`ERROR: Failed to connect to ${endpoint}: ${err.message}`);
-    }
+  try {
+    connection = new Connection(config.RPC_ENDPOINT, 'confirmed');
+    await rpcLimiter.wait();
+    const version = await connection.getVersion();
+    console.log(`INFO: Connected to RPC: ${config.RPC_ENDPOINT}, Solana version: ${version['solana-core']}`);
+    return connection;
+  } catch (err) {
+    console.error(`ERROR: Failed to connect to ${config.RPC_ENDPOINT}: ${err.message}`);
+    process.exit(1);
   }
-  console.error('ERROR: All RPC endpoints failed');
-  process.exit(1);
 }
 
 // Fetch token supply
 const supplyCache = new Map();
-async function getTokenSupply(mintAddress) {
-  if (supplyCache.has(mintAddress)) {
-    console.log(`INFO: Using cached supply for ${mintAddress}`);
-    return supplyCache.get(mintAddress);
+async function getTokenSupply(mint) {
+  if (supplyCache.has(mint)) {
+    console.log(`INFO: Using cached supply for ${mint}`);
+    return supplyCache.get(mint);
   }
   try {
     await rpcLimiter.wait();
-    const mintPubkey = new PublicKey(mintAddress);
+    const mintPubkey = new PublicKey(mint);
     const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
-    if (!mintInfo.value) throw new Error(`No mint data for ${mintAddress}`);
+    if (!mintInfo.value) throw new Error(`No mint data for ${mint}`);
     const supply = mintInfo.value.data.parsed.info.supply / 1_000_000;
-    supplyCache.set(mintAddress, supply);
-    console.log(`INFO: Token ${mintAddress} supply: ${supply} tokens`);
+    supplyCache.set(mint, supply);
+    console.log(`INFO: Token ${mint} supply: ${supply} tokens`);
     return supply;
   } catch (err) {
-    console.warn(`ERROR: Failed to fetch token supply for ${mintAddress}: ${err.message}`);
+    console.warn(`ERROR: Failed to fetch token supply for ${mint}: ${err.message}`);
     return null;
   }
 }
@@ -153,10 +127,10 @@ async function getVaultBalance(vaultAddress) {
 }
 
 // Derive vault address
-async function getVaultAddress(mintAddress) {
+async function getVaultAddress(mint) {
   try {
     const programPubkey = new PublicKey(config.PUMP_FUN_PROGRAM);
-    const mintPubkey = new PublicKey(mintAddress);
+    const mintPubkey = new PublicKey(mint);
     const [vaultPda] = await PublicKey.findProgramAddress(
       [Buffer.from('bonding-curve'), mintPubkey.toBuffer()],
       programPubkey
@@ -164,48 +138,32 @@ async function getVaultAddress(mintAddress) {
     await rpcLimiter.wait();
     const balance = await connection.getBalance(vaultPda);
     if (balance === 0) throw new Error('Vault has no balance');
-    console.log(`INFO: Vault address for ${mintAddress}: ${vaultPda.toString()}`);
+    console.log(`INFO: Vault address for ${mint}: ${vaultPda.toString()}`);
     return vaultPda.toString();
   } catch (err) {
-    console.warn(`WARN: PDA vault lookup failed for ${mintAddress}: ${err.message}`);
-    try {
-      await rpcLimiter.wait();
-      const signatures = await connection.getSignaturesForAddress(new PublicKey(mintAddress), { limit: 1 });
-      if (!signatures.length) throw new Error('No creation transaction found');
-      await rpcLimiter.wait();
-      const tx = await connection.getParsedTransaction(signatures[0].signature, { maxSupportedTransactionVersion: 0 });
-      const vaultAccount = tx.transaction.message.accountKeys.find(
-        key => key.writable && key.pubkey.toString() !== mintAddress
-      );
-      if (!vaultAccount) throw new Error('No vault account in transaction');
-      console.log(`INFO: Fallback vault address for ${mintAddress}: ${vaultAccount.pubkey.toString()}`);
-      return vaultAccount.pubkey.toString();
-    } catch (fallbackErr) {
-      console.warn(`ERROR: Fallback vault lookup failed for ${mintAddress}: ${fallbackErr.message}`);
-      return null;
-    }
+    console.warn(`WARN: PDA vault lookup failed for ${mint}: ${err.message}`);
+    return null;
   }
 }
 
-// 📈 calculatePrice.js
-export function calculatePrice(tokenSupply, solInVault) {
+// Calculate price
+function calculatePrice(tokenSupply, solInVault) {
   if (tokenSupply <= 0 || solInVault <= 0) {
     console.warn(`WARN: Invalid inputs for price calculation: tokenSupply=${tokenSupply}, solInVault=${solInVault}`);
     return 0;
   }
-
-  const basePrice = solInVault / tokenSupply; // SOL per token
+  const basePrice = solInVault / tokenSupply;
   const curveFactor = Math.log10(tokenSupply / 1_000_000 + 1) * 1.0;
-  const price = basePrice * curveFactor * 1_000_000; // Scaled to avoid underflow
-
+  const price = basePrice * curveFactor * 1_000_000;
   const finalPrice = isNaN(price) || price < 0.00000001 ? 0.00000001 : price;
   console.log(`DEBUG: Price calc: basePrice=${basePrice}, curveFactor=${curveFactor}, finalPrice=${finalPrice}`);
   return finalPrice;
 }
-// Fetch buyer stats with pagination
-async function getBuyerStats(mintAddress, startTime) {
+
+// Fetch buyer stats
+async function getBuyerStats(mint, startTime) {
   try {
-    const mintPubkey = new PublicKey(mintAddress);
+    const mintPubkey = new PublicKey(mint);
     const buyers10s = new Set();
     const buyers30s = new Set();
     let beforeSignature = null;
@@ -214,15 +172,12 @@ async function getBuyerStats(mintAddress, startTime) {
       await rpcLimiter.wait();
       const options = beforeSignature ? { limit: 1000, before: beforeSignature } : { limit: 1000 };
       const signatures = await connection.getSignaturesForAddress(mintPubkey, options);
-
       if (!signatures.length) break;
 
       for (const sig of signatures) {
         if (!sig.blockTime) continue;
-
         const txTime = sig.blockTime * 1000;
-        if (txTime > startTime + 30000) continue;
-        if (txTime < startTime) return summarize();
+        if (txTime > startTime + 30000 || txTime < startTime) continue;
 
         await rpcLimiter.wait();
         const tx = await connection.getParsedTransaction(sig.signature, { maxSupportedTransactionVersion: 0 });
@@ -232,14 +187,13 @@ async function getBuyerStats(mintAddress, startTime) {
           ii.instructions.filter(i =>
             i.programId.toString() === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' &&
             i.parsed?.type === 'transfer' &&
-            i.parsed?.info?.mint === mintAddress
+            i.parsed?.info?.mint === mint
           )
         );
 
         for (const transfer of tokenTransfers) {
           const to = transfer.parsed?.info?.destination;
-          if (!to || to === mintAddress) continue;
-
+          if (!to || to === mint) continue;
           if (txTime <= startTime + 10000) buyers10s.add(to);
           if (txTime <= startTime + 30000) buyers30s.add(to);
         }
@@ -249,100 +203,104 @@ async function getBuyerStats(mintAddress, startTime) {
       if (signatures.length < 1000) break;
     }
 
-    return summarize();
-
-    function summarize() {
-      console.log(`INFO: Buyer stats for ${mintAddress}: ${buyers10s.size} (10s), ${buyers30s.size} (30s)`);
-      return { buyers10s: buyers10s.size, buyers30s: buyers30s.size };
-    }
-
+    console.log(`INFO: Buyer stats for ${mint}: ${buyers10s.size} (10s), ${buyers30s.size} (30s)`);
+    return { buyers10s: buyers10s.size, buyers30s: buyers30s.size };
   } catch (err) {
-    console.warn(`WARN: Failed to fetch buyer stats for ${mintAddress}: ${err.message}`);
+    console.warn(`WARN: Failed to fetch buyer stats for ${mint}: ${err.message}`);
     return { buyers10s: 0, buyers30s: 0 };
   }
 }
 
 // Simulate trade
-async function simulateTrade(mintAddress, startTime) {
-  const solPrice = (await getSolPrice()) || config.FALLBACK_SOL_PRICE;
-  const vaultAddress = await getVaultAddress(mintAddress);
+async function simulateTrade(mint, startTime) {
+  const solPrice = (await getSolPrice()) || 166.0;
+  const vaultAddress = await getVaultAddress(mint);
   if (!vaultAddress) {
-    console.warn(`WARN: Skipping ${mintAddress} due to invalid vault address`);
-    return null;
+    console.warn(`WARN: Skipping ${mint} due to invalid vault address`);
+    return { mint, status: 'skipped', reason: 'invalid_vault' };
   }
 
   let initialPrice = null;
   let tradeExecuted = false;
-  let timestamp = 0; // Declare at top of scope for tracking entry time
-  let tradeLog = {
+  let timestamp = 0;
+  let tier = 'Flicker';
+  const tradeLog = {
     timestamp: format(startTime || new Date(), 'yyyy-MM-dd HH:mm:ss'),
-    mintAddress: escapeHtml(mintAddress),
+    mint: escapeHtml(mint),
     vaultAddress: escapeHtml(vaultAddress),
     entryPrice: null,
     exitPrice: null,
     profitSol: 0,
     profitUsd: 0,
     status: 'skipped',
+    reason: 'insufficient_buyers',
     buyers10s: 0,
     buyers30s: 0,
-    duration: 0,
+    durationSec: 0,
+    tier,
+    chartLink: `https://pump.fun/coin/${mint}`,
   };
 
-  const buyerStats = await getBuyerStats(mintAddress, startTime);
+  const buyerStats = await getBuyerStats(mint, startTime);
   tradeLog.buyers10s = buyerStats.buyers10s;
   tradeLog.buyers30s = buyerStats.buyers30s;
 
-  if (buyerStats.buyers10s < 0) { // Temporary: ≥0 for testing
-    console.log(`INFO: Skipping trade for ${mintAddress} due to insufficient buyers (${buyerStats.buyers10s}/0)`);
+  if (buyerStats.buyers10s < 1) {
+    console.log(`INFO: Skipping trade for ${mint} due to insufficient buyers (${buyerStats.buyers10s}/1)`);
     return tradeLog;
   }
 
   const simStart = Date.now();
   while (Date.now() - simStart < config.MAX_HOLD_TIME) {
-    const tokenSupply = await getTokenSupply(mintAddress);
+    const tokenSupply = await getTokenSupply(mint);
     const solInVault = await getVaultBalance(vaultAddress);
     if (!tokenSupply || !solInVault) {
-      console.warn(`WARN: Skipping ${mintAddress} due to missing data`);
+      console.warn(`WARN: Skipping ${mint} due to missing data`);
       tradeLog.status = 'failed';
+      tradeLog.reason = 'missing_data';
       return tradeLog;
     }
 
     const currentPrice = calculatePrice(tokenSupply, solInVault);
-    console.log(`INFO: Current price for ${mintAddress}: ${currentPrice.toFixed(8)} SOL`);
+    console.log(`INFO: Current price for ${mint}: ${currentPrice.toFixed(8)} SOL`);
     if (!initialPrice) initialPrice = currentPrice;
 
-    // Check if we should enter the trade
+    // Tier classification
+    if (currentPrice >= initialPrice * 3.0) tier = 'Moonshot';
+    else if (currentPrice >= initialPrice * 1.5) tier = 'Rocket';
+    else if (currentPrice >= initialPrice * 1.1) tier = 'Spark';
+    tradeLog.tier = tier;
+
+    // Enter trade
     if (!tradeExecuted && currentPrice >= initialPrice * 1.10 && currentPrice >= 0.0000001) {
       tradeExecuted = true;
       tradeLog.entryPrice = currentPrice;
       tradeLog.status = 'entered';
-      timestamp = Date.now(); // Track entry time
-      console.log(`INFO: [Simulated] Buying ${mintAddress} at ${currentPrice.toFixed(8)} SOL`);
+      tradeLog.reason = 'price_threshold_met';
+      timestamp = Date.now();
+      console.log(`INFO: [Simulated] Buying ${mint} at ${currentPrice.toFixed(8)} SOL`);
     }
 
-    // Simulate trade execution
+    // Exit trade
     if (tradeExecuted && tradeLog.status === 'entered') {
-      const heldDuration = Date.now() - timestamp; // in ms
-
-      // Strategy v3 logic
+      const heldDuration = Date.now() - timestamp;
       if (currentPrice >= tradeLog.entryPrice * 3.0 && heldDuration >= 60000) {
         tradeLog.exitPrice = currentPrice;
         tradeLog.status = 'moonshot_exit';
-        tradeLog.duration = Math.round(heldDuration / 1000);
-        tradeLog.profitSol = currentPrice - tradeLog.entryPrice;
+        tradeLog.reason = 'moonshot_target_hit';
+        tradeLog.durationSec = Math.round(heldDuration / 1000);
+        tradeLog.profitSol = (currentPrice - tradeLog.entryPrice) * config.TRADE_SIZE - config.TX_FEE;
         tradeLog.profitUsd = tradeLog.profitSol * solPrice;
-        console.log(`✅ Exiting ${mintAddress} at +200% after ${tradeLog.duration}s`);
+        console.log(`✅ Exiting ${mint} at +200% after ${tradeLog.durationSec}s`);
         break;
-      } else if (
-        currentPrice >= tradeLog.entryPrice * 1.5 || // +50%
-        heldDuration >= 120000 // or held 120s max
-      ) {
+      } else if (currentPrice >= tradeLog.entryPrice * 1.5 || heldDuration >= 120000) {
         tradeLog.exitPrice = currentPrice;
         tradeLog.status = 'fallback_exit';
-        tradeLog.duration = Math.round(heldDuration / 1000);
-        tradeLog.profitSol = currentPrice - tradeLog.entryPrice;
+        tradeLog.reason = heldDuration >= 120000 ? 'max_hold_time' : 'fallback_target_hit';
+        tradeLog.durationSec = Math.round(heldDuration / 1000);
+        tradeLog.profitSol = (currentPrice - tradeLog.entryPrice) * config.TRADE_SIZE - config.TX_FEE;
         tradeLog.profitUsd = tradeLog.profitSol * solPrice;
-        console.log(`⚠️ Exiting ${mintAddress} at fallback after ${tradeLog.duration}s`);
+        console.log(`⚠️ Exiting ${mint} at fallback after ${tradeLog.durationSec}s`);
         break;
       }
     }
@@ -355,6 +313,15 @@ async function simulateTrade(mintAddress, startTime) {
 
 // Generate HTML report
 async function generateHtmlReport(trades, snowball) {
+  const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+  const htmlPath = config.REPORT_HTML_PATH.replace('.html', `_${timestamp}.html`);
+  const tierColors = {
+    Moonshot: '#FFD700',
+    Rocket: '#FF6347',
+    Spark: '#90EE90',
+    Flicker: '#D3D3D3',
+  };
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -366,6 +333,8 @@ async function generateHtmlReport(trades, snowball) {
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
         .summary { margin-bottom: 20px; }
+        a { color: #1e90ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
       </style>
     </head>
     <body>
@@ -378,96 +347,62 @@ async function generateHtmlReport(trades, snowball) {
         <p><strong>Snowball Bankroll:</strong> ${snowball.bankroll.toFixed(2)} SOL</p>
         <p><strong>Win Rate:</strong> ${((trades.filter(t => t.profitSol > 0).length / trades.length) * 100 || 0).toFixed(2)}%</p>
         <p><strong>ROI:</strong> ${(trades.reduce((sum, t) => sum + t.profitSol, 0) / (config.TRADE_SIZE * trades.length) * 100 || 0).toFixed(2)}%</p>
-        <p><strong>Avg Trade Duration:</strong> ${(trades.reduce((sum, t) => sum + (t.duration || 0), 0) / trades.length || 0).toFixed(2)}s</p>
+        <p><strong>Avg Trade Duration:</strong> ${(trades.reduce((sum, t) => sum + (t.durationSec || 0), 0) / trades.length || 0).toFixed(2)}s</p>
       </div>
       <table>
         <thead>
           <tr>
             <th>Timestamp</th>
             <th>Token</th>
+            <th>Tier</th>
             <th>Status</th>
+            <th>Reason</th>
             <th>Entry Price (SOL)</th>
             <th>Exit Price (SOL)</th>
             <th>Profit (SOL)</th>
             <th>Profit (USD)</th>
             <th>Buyers (10s/30s)</th>
             <th>Duration (s)</th>
+            <th>Chart</th>
           </tr>
         </thead>
         <tbody>
           ${trades.map(t => `
-            <tr>
+            <tr style="background-color: ${tierColors[t.tier] || '#FFFFFF'};">
               <td>${escapeHtml(t.timestamp)}</td>
-              <td>${escapeHtml(t.mintAddress)}</td>
+              <td><a href="${t.chartLink}" target="_blank">${escapeHtml(t.mint.slice(0, 8))}...</a></td>
+              <td>${escapeHtml(t.tier)}</td>
               <td>${escapeHtml(t.status)}</td>
+              <td>${escapeHtml(t.reason)}</td>
               <td>${t.entryPrice?.toFixed(8) || '-'}</td>
               <td>${t.exitPrice?.toFixed(8) || '-'}</td>
               <td>${t.profitSol.toFixed(4)}</td>
               <td>${t.profitUsd.toFixed(2)}</td>
               <td>${t.buyers10s}/${t.buyers30s}</td>
-              <td>${(t.duration || 0).toFixed(2)}</td>
+              <td>${t.durationSec.toFixed(2)}</td>
+              <td><a href="${t.chartLink}" target="_blank">View</a></td>
             </tr>
           `).join('')}
+          <tr style="font-weight: bold;">
+            <td colspan="7">Total</td>
+            <td>${trades.reduce((sum, t) => sum + t.profitSol, 0).toFixed(4)}</td>
+            <td>${trades.reduce((sum, t) => sum + t.profitUsd, 0).toFixed(2)}</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
         </tbody>
       </table>
     </body>
     </html>
   `;
-  await fs.mkdir(path.dirname(config.REPORT_HTML_PATH), { recursive: true });
-  await fs.writeFile(config.REPORT_HTML_PATH, html);
-  console.log(`INFO: HTML report saved to ${config.REPORT_HTML_PATH}`);
-  pdf.create(html).toFile(config.REPORT_PDF_PATH, (err) => {
-    if (err) console.error(`ERROR: Failed to create PDF: ${err.message}`);
-    else console.log(`INFO: PDF report saved to ${config.REPORT_PDF_PATH}`);
-  });
+  await fs.mkdir(path.dirname(htmlPath), { recursive: true });
+  await fs.writeFile(htmlPath, html);
+  console.log(`INFO: HTML report saved to ${htmlPath}`);
+  return htmlPath;
 }
 
-// Zip reports
-async function zipReports() {
-  const output = fs.createWriteStream('./runs/reports.zip');
-  const archive = archiver('zip', { zlib: { level: 9 } });
-  archive.pipe(output);
-  archive.file(config.REPORT_JSON_PATH, { name: 'profitability_report.json' });
-  archive.file(config.REPORT_HTML_PATH, { name: 'profitability_report.html' });
-  archive.file(config.REPORT_PDF_PATH, { name: 'profitability_report.pdf' });
-  archive.file('./runs/analyzed_tokens.json', { name: 'analyzed_tokens.json' });
-  await archive.finalize();
-  console.log('INFO: Reports zipped to ./runs/reports.zip');
-}
-
-// Send email alert
-async function sendReportEmail(summary) {
-  if (!config.EMAIL_USER || !config.EMAIL_PASS || !config.EMAIL_TO) {
-    console.warn('INFO: Email alerts disabled; missing required email configuration');
-    return;
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: config.EMAIL_HOST,
-    port: Number(config.EMAIL_PORT),
-    secure: config.EMAIL_PORT === 465,
-    auth: {
-      user: config.EMAIL_USER,
-      pass: config.EMAIL_PASS,
-    },
-  });
-
-  const mailOptions = {
-    from: config.EMAIL_USER,
-    to: config.EMAIL_TO,
-    subject: 'Pumpiyo Sniper Bot Profitability Report',
-    text: `Generated: ${summary.generated}\nTotal Trades: ${summary.totalTrades}\nSuccessful Trades: ${summary.successfulTrades}\nTotal Profit: ${summary.totalProfit} SOL\nSnowball Bankroll: ${summary.bankroll} SOL\n\nView report: ${config.REPORT_HTML_PATH}`,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log('INFO: Email alert sent');
-  } catch (err) {
-    console.error(`ERROR: Failed to send email: ${err.message}`);
-  }
-}
-
-// Simulate snowball
+// Manage snowball
 async function manageSnowball(trades) {
   let snowball = {
     bankroll: 0.5,
@@ -492,23 +427,15 @@ async function manageSnowball(trades) {
 }
 
 // Generate interim report
-async function generateInterimReport(trades) {
+async function generateInterimReport(trades, progressBar) {
   const snowball = await manageSnowball(trades);
   await fs.mkdir(path.dirname(config.REPORT_JSON_PATH), { recursive: true });
   await fs.writeFile(config.REPORT_JSON_PATH, JSON.stringify(trades, null, 2));
-  await generateHtmlReport(trades, snowball);
-  await zipReports();
-
-  const summary = {
-    generated: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-    totalTrades: trades.length,
-    successfulTrades: trades.filter(t => t.profitSol > 0).length,
-    totalProfit: trades.reduce((sum, t) => sum + t.profitSol, 0).toFixed(4),
-    bankroll: snowball.bankroll.toFixed(2),
-  };
-
-  await sendReportEmail(summary);
-  console.log(`INFO: Interim report generated with ${trades.length} trades`);
+  const htmlPath = await generateHtmlReport(trades, snowball);
+  if (progressBar) {
+    progressBar.update({ profit: trades.reduce((sum, t) => sum + t.profitSol, 0).toFixed(4) });
+  }
+  console.log(`INFO: Interim report generated with ${trades.length} trades at ${htmlPath}`);
 }
 
 // Monitor live trades
@@ -520,9 +447,18 @@ async function generateProfitabilityReport() {
   let trades = [];
   const analyzedTokens = [];
 
+  const progressBar = new cliProgress.SingleBar({
+    format: 'Progress |{bar}| {percentage}% | Tokens: {value}/{total} | Profit: {profit} SOL | ETA: {eta}s',
+    barCompleteChar: '\u2588',
+    barIncompleteChar: '\u2591',
+    hideCursor: true,
+  });
+
   const startTime = Date.now();
   const durationMs = 60 * 60 * 1000;
   let lastReportTime = startTime;
+  progressBar.start(1000, 0, { profit: '0.0000' });
+
   while (Date.now() - startTime < durationMs) {
     try {
       const txs = await throttledGet(url);
@@ -538,10 +474,11 @@ async function generateProfitabilityReport() {
         if (tradeLog) {
           trades.push(tradeLog);
           console.log(`INFO: Trade log for ${transfer.mint}: ${tradeLog.status}`);
+          progressBar.increment();
         }
 
         if (trades.length >= 5 || Date.now() - lastReportTime >= 5 * 60 * 1000) {
-          await generateInterimReport(trades);
+          await generateInterimReport(trades, progressBar);
           await fs.writeFile('./runs/analyzed_tokens.json', JSON.stringify(analyzedTokens, null, 2));
           console.log(`INFO: Saved ${analyzedTokens.length} analyzed tokens`);
           trades = [];
@@ -552,86 +489,23 @@ async function generateProfitabilityReport() {
       await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (err) {
       console.error(`ERROR: Failed to fetch transactions: ${err.message}`);
-      if (err.response?.status === 429) {
-        console.warn('INFO: Switching RPC due to 429 error');
-        currentRpcIndex = (currentRpcIndex + 1) % config.RPC_ENDPOINTS.length;
-        connection = await getConnection();
-      }
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
 
   if (trades.length > 0) {
-    await generateInterimReport(trades);
+    await generateInterimReport(trades, progressBar);
     await fs.writeFile('./runs/analyzed_tokens.json', JSON.stringify(analyzedTokens, null, 2));
   }
 
+  progressBar.stop();
   console.log('INFO: Report generation complete');
-}
-
-// Backtest historical data
-async function generateProfitabilityReportFromHistory(filePath) {
-  try {
-    connection = await getConnection();
-    const data = JSON.parse(await fs.readFile(filePath, 'utf8'));
-    console.log(`INFO: Loaded ${data.length} tokens from ${filePath}`);
-    if (!data.length) throw new Error('No tokens in historical data');
-    let trades = [];
-    const analyzedTokens = [];
-    for (const { mint, timestamp } of data) {
-      console.log(`INFO: Analyzing historical token: ${mint}`);
-      try {
-        analyzedTokens.push({ mint, timestamp });
-        const tradeLog = await simulateTrade(mint, timestamp);
-        if (tradeLog) trades.push(tradeLog);
-      } catch (err) {
-        console.warn(`WARN: Failed to analyze ${mint}: ${err.message}`);
-      }
-    }
-    console.log(`INFO: Processed ${trades.length} trades`);
-    await fs.writeFile('./runs/analyzed_tokens.json', JSON.stringify(analyzedTokens, null, 2));
-    await generateInterimReport(trades);
-    console.log('INFO: Historical report generation complete');
-  } catch (err) {
-    console.error(`ERROR: Failed to process historical data: ${err.message}`);
-    process.exit(1);
-  }
 }
 
 // Run
 (async () => {
   try {
-    if (process.argv.includes('--fetch-latest')) {
-      console.log('INFO: Fetching latest 100 tokens...');
-      const url = `https://api.helius.xyz/v0/addresses/${config.PUMP_FUN_PROGRAM}/transactions?api-key=${config.HELIUS_API_KEY}`;
-      const cutoff = Date.now() - 3 * 24 * 60 * 60 * 1000; // Last 3 days
-      try {
-        const txs = await throttledGet(url);
-        const launches = txs
-          .filter(tx => tx.tokenTransfers?.some(t => t.mint?.endsWith('pump')))
-          .map(tx => ({
-            mint: tx.tokenTransfers.find(t => t.mint?.endsWith('pump')).mint,
-            timestamp: tx.timestamp * 1000,
-          }))
-          .filter(t => t.timestamp >= cutoff)
-          .slice(0, 100); // Limit to 100 tokens
-        console.log(`INFO: Fetched ${launches.length} token launches`);
-        if (!launches.length) throw new Error('No recent token launches found');
-
-        await fs.mkdir('./runs', { recursive: true });
-        await fs.writeFile('./runs/historical_tokens.json', JSON.stringify(launches, null, 2));
-        console.log(`INFO: Saved ${launches.length} tokens to ./runs/historical_tokens.json`);
-
-        await generateProfitabilityReportFromHistory('./runs/historical_tokens.json');
-      } catch (err) {
-        console.error(`ERROR: Failed to fetch recent token launches: ${err.message}`);
-        process.exit(1);
-      }
-    } else if (process.argv[2]) {
-      await generateProfitabilityReportFromHistory(process.argv[2]);
-    } else {
-      await generateProfitabilityReport();
-    }
+    await generateProfitabilityReport();
   } catch (err) {
     console.error(`ERROR: Fatal error: ${err.message}`);
     process.exit(1);
