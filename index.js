@@ -1,55 +1,96 @@
-// index.js
-// Description: Solana meme coin trading bot entry point
-// Author: Steve Skye
-// Imports
 import dotenv from 'dotenv';
-import { Connection } from '@solana/web3.js';
-import { getTokenPrice } from './utils/getTokenPrice.js';
+import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { fetchRecentMints } from './utils/fetchRecentMints.js';
-// Load environment variables
+import { getTokenPrice } from './utils/getTokenPrice.js';
+import { executeSwap } from './utils/executeSwap.js';
+import {
+  addToken,
+  getWaitingTokens,
+  markAsPriced,
+  incrementRetry,
+  expireOldTokens,
+} from './utils/trackedTokens.js';
+
 dotenv.config();
-// Set up the connection to Solana mainnet
-const connection = new Connection('https://api.mainnet-beta.solana.com');
-// Array to track active tokens
-let trackedTokens = [];
-// Function to fetch recent mints and populate tracking list
-async function updateTrackedTokens() {
-  const mints = await fetchRecentMints();
-  trackedTokens = mints.map(mint => ({
-    mint,
-    entryPrice: 0.001, // Starting price assumption (will vary in real use)
-    entryTime: Date.now(),
-    status: 'holding'
-  }));
-}
-// Function to evaluate token performance and make trading decisions
-function evaluateToken(token, currentPrice) {
-  const gain = currentPrice / token.entryPrice;
-  const heldSeconds = Math.floor((Date.now() - token.entryTime) / 1000);
-  let decision = 'hold';
 
-  if (gain >= 2.0 && heldSeconds >= 60) decision = 'moon-hold';
-  else if (gain >= 1.5) decision = 'fast-flip';
-  else if (gain <= 0.9 && heldSeconds >= 30) decision = 'slow-rug';
-  else if (gain < 1.0 && heldSeconds >= 60) decision = 'break-even bail';
+///////////////////////////////////////
+// ⚙️ CONFIGURATION
+///////////////////////////////////////
 
-  return { ...token, gain, heldSeconds, decision };
-}
-// Function to monitor token prices and log evaluation results
-async function monitorTokens() {
-  for (const token of trackedTokens) {
+const TEST_MODE = process.env.TEST_MODE === 'true';
+const RPC_URL = TEST_MODE
+  ? process.env.RPC_ENDPOINT_DEVNET || 'https://api.devnet.solana.com'
+  : process.env.RPC_ENDPOINT_MAINNET || 'https://mainnet.helius-rpc.com/?api-key=82256758-538e-4d1a-a827-39d8a176c540';
+
+if (!RPC_URL) throw new Error('RPC endpoint not configured');
+
+const connection = new Connection(RPC_URL, 'confirmed');
+import bs58 from 'bs58';
+
+const wallet = Keypair.fromSecretKey(
+  bs58.decode(process.env.HOT_WALLET_PRIVATE_KEY)
+);
+const JUPITER_QUOTE_API = 'https://quote-api.jup.ag/v6/quote';
+const TRADE_SIZE_SOL = parseFloat(process.env.TRADE_SIZE) || 0.05; // 0.05 SOL
+const SLIPPAGE_BPS = (parseFloat(process.env.SLIPPAGE) * 10000) || 300; // 3% -> 300 bps
+const ENTRY_TRIGGER = parseFloat(process.env.ENTRY_TRIGGER) || 1.05; // 5% gain
+const TRACK_LIMIT = 10;
+const PRICE_RETRY_INTERVAL = 15000; // Retry every 15 seconds
+
+console.log(TEST_MODE
+  ? '🚧 Running in TEST MODE — no real trades will be executed.'
+  : '🚀 Running in LIVE MODE — executing real trades.');
+
+///////////////////////////////////////
+// 🔁 MAIN LOOP
+///////////////////////////////////////
+
+async function mainLoop() {
+  let recentMints = [];
+  try {
+    recentMints = await fetchRecentMints();
+    recentMints.forEach(({ mint, symbol }) => addToken(mint, symbol || 'Unknown'));
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] fetchRecentMints failed: ${err.message}`);
+  }
+
+  const tokensToCheck = getWaitingTokens();
+  for (const token of tokensToCheck) {
+    if (new Date() - new Date(token.createdAt) < PRICE_RETRY_INTERVAL) {
+      continue; // Wait for liquidity
+    }
+
     try {
-      const currentPrice = await getTokenPrice(token.mint);
-      const result = evaluateToken(token, currentPrice);
-      console.log(`📈 [${token.mint}] Price: ${currentPrice.toFixed(6)} | Held: ${result.heldSeconds}s | Decision: ${result.decision}`);
+      const price = await getTokenPrice(token.mint, JUPITER_QUOTE_API, SLIPPAGE_BPS, TRADE_SIZE_SOL);
+      if (price !== null) {
+        console.log(`[${new Date().toISOString()}] 💰 ${token.mint} (${token.symbol}): $${price.toFixed(6)}`);
+        markAsPriced(token.mint, price);
+        // Check SNOWBALL strategy entry trigger
+        if (!token.initialPrice) {
+          token.initialPrice = price; // Set initial price
+        }
+        if (price >= token.initialPrice * ENTRY_TRIGGER) {
+          await executeSwap(
+            token.mint,
+            price,
+            TRADE_SIZE_SOL * LAMPORTS_PER_SOL,
+            SLIPPAGE_BPS,
+            wallet,
+            TEST_MODE,
+            connection
+          );
+        }
+      } else {
+        incrementRetry(token.mint);
+      }
     } catch (err) {
-      console.error(`❌ Error for ${token.mint}:`, err.message);
+      console.error(`[${new Date().toISOString()}] Price fetch failed for ${token.mint} (${token.symbol}): ${err.message}`);
+      incrementRetry(token.mint);
     }
   }
+
+  expireOldTokens();
+  setTimeout(mainLoop, 5000); // Every 5 seconds
 }
-// Main bot loop to initialize and start periodic monitoring
-(async () => {
-  await updateTrackedTokens();
-  console.log(`🔁 Monitoring ${trackedTokens.length} tokens...`);
-  setInterval(monitorTokens, 5000);
-})();
+
+mainLoop();

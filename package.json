@@ -19,9 +19,12 @@
   "homepage": "https://github.com/notyou61/crypto-trading-bot#readme",
   "description": "",
   "dependencies": {
+    "@raydium-io/raydium-sdk": "^1.3.1-beta.58",
     "@solana/web3.js": "^1.98.2",
     "axios": "^1.9.0",
-    "dotenv": "^16.5.0"
+    "bs58": "^6.0.0",
+    "dotenv": "^16.5.0",
+    "ws": "^8.18.2"
   },
   "type": "module"
 }

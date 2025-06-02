@@ -1,20 +1,22 @@
+// utils/getTokenPrice.js
 import axios from 'axios';
-import { PublicKey } from '@solana/web3.js';
 
-export async function getTokenPrice(mint) {
-  if (!mint || typeof mint !== 'string' || mint.length !== 44) {
-    throw new Error(`Invalid mint address: ${mint}`);
-  }
-
+export async function getTokenPrice(mint, quoteApiUrl, slippageBps, inputAmountSol = 0.05) {
   try {
-    const pubKey = new PublicKey(mint); // Validates the key
-    const url = `https://api.dexscreener.io/latest/dex/pairs/solana/${mint}`;
+    const inputMint = 'So11111111111111111111111111111111111111112'; // SOL
+    const amount = Math.floor(inputAmountSol * 1e9); // Convert SOL to lamports
+
+    const url = `${quoteApiUrl}?inputMint=${inputMint}&outputMint=${mint}&amount=${amount}&slippageBps=${slippageBps}`;
     const res = await axios.get(url);
-    const price = res.data?.pair?.priceUsd;
-    if (!price) throw new Error('Price not found');
-    return parseFloat(price);
-  } catch (err) {
-    console.error(`[getTokenPrice] Error: ${err.message}`);
-    throw err;
+
+    const route = res.data?.data?.[0];
+    if (!route) return null;
+
+    const outAmount = parseFloat(route.outAmount) / 1e9;
+    const priceUsd = parseFloat(route.priceImpactPct) ? (inputAmountSol / outAmount) : null;
+
+    return priceUsd || null;
+  } catch {
+    return null;
   }
 }
