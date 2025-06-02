@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Trading Bot (index.js)",
+      "type": "shell",
+      "command": "npm start",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "Runs the main trading bot loop from index.js",
+      "problemMatcher": []
+    }
+  ]
+}

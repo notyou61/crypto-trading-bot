@@ -1,0 +1,12 @@
+// .vscode/settings.json
+{
+  "command-runner.terminal.name": "TradingBot",
+  "command-runner.terminal.autoClear": true,
+  "command-runner.terminal.autoFocus": true,
+  "command-runner.commands": {
+    "🚀 Run Trading Bot": {
+      "command": "npm start",
+      "group": "statusBar"
+    }
+  }
+}
