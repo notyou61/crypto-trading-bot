@@ -1,121 +1,80 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { PublicKey } from '@solana/web3.js';
+
 dotenv.config();
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
-const PUMP_FUN_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
+const CREATOR = process.env.PUMPFUN_CREATOR_MAINNET;
+const DEBUG = true;
 
-export default async function fetchRecentMints(limit = 50) {
+export async function fetchRecentMints() {
   if (!HELIUS_API_KEY) {
-    console.error('❌ Missing HELIUS_API_KEY in .env');
+    console.error('[fetchRecentMints] Error: HELIUS_API_KEY is not set');
     return [];
   }
-
-  const url = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
-
-  const signaturesPayload = {
-    jsonrpc: '2.0',
-    id: 'new-mints-signatures',
-    method: 'getSignaturesForAddress',
-    params: [
-      PUMP_FUN_PROGRAM,
-      {
-        limit,
-        commitment: 'confirmed',
-        before: null,
-      },
-    ],
-  };
-
+  if (!CREATOR) {
+    console.error('[fetchRecentMints] Error: PUMPFUN_CREATOR_MAINNET is not set');
+    return [];
+  }
   try {
-    const signaturesResponse = await axios.post(url, signaturesPayload);
-    if (!signaturesResponse.data?.result) {
-      console.error('❌ Unexpected API response format for signatures:', signaturesResponse.data);
-      return [];
-    }
-
-    const signatures = signaturesResponse.data.result;
-    console.log(`✅ Found ${signatures.length} transaction signatures`);
-
-    const tokens = [];
-    const seenMints = new Set();
-
-    for (const sig of signatures) {
-      const txPayload = {
-        jsonrpc: '2.0',
-        id: `tx-${sig.signature}`,
-        method: 'getTransaction',
-        params: [
-          sig.signature,
-          {
-            commitment: 'confirmed',
-            maxSupportedTransactionVersion: 0,
-            encoding: 'jsonParsed',
-          },
-        ],
-      };
-
-      try {
-        const txResponse = await axios.post(url, txPayload);
-        if (!txResponse.data?.result) {
-          console.warn(`⚠️ No data for transaction ${sig.signature}`);
-          continue;
-        }
-
-        const tx = txResponse.data.result;
-        const innerInstructions = tx.meta?.innerInstructions || [];
-        innerInstructions
-          .flatMap(i => i.instructions)
-          .forEach(ix => console.log('Instruction:', {
-            programId: ix.programId,
-            type: ix.parsed?.type,
-            parsed: ix.parsed,
-          }));
-
-        const mintIx = innerInstructions
-          .flatMap(i => i.instructions)
-          .find(ix => {
-            const isSPLToken = ix.programId === 'TokenkegQfeZyiNwAJbNbGK7Qx' &&
-              (ix.parsed?.type === 'mintTo' ||
-               ix.parsed?.type === 'initializeMint' ||
-               ix.parsed?.type === 'initializeAccount3' ||
-               ix.parsed?.type === 'getAccountDataSize');
-            const isPumpFun = ix.programId === PUMP_FUN_PROGRAM;
-            return isSPLToken || isPumpFun;
-          });
-
-        if (mintIx) {
-          const tokenAddress = mintIx.parsed?.info?.mint || findMintInAccounts(tx);
-          const isCreation = tx.meta?.logMessages?.some(log => log.includes('Instruction: Create') && log.includes(PUMP_FUN_PROGRAM));
-          if (tokenAddress && !seenMints.has(tokenAddress) && isCreation) {
-            seenMints.add(tokenAddress);
-            tokens.push({
-              tokenAddress,
-              signature: sig.signature,
-              createdAt: tx.blockTime ? tx.blockTime * 1000 : Date.now(),
-            });
-          }
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } catch (txError) {
-        console.warn(`⚠️ Failed to fetch transaction ${sig.signature}: ${txError.message}`);
-      }
-    }
-
-    console.log(`✅ Found ${tokens.length} new mints`);
-    return tokens;
+    new PublicKey(CREATOR);
   } catch (err) {
-    console.error('❌ Failed to fetch recent mints:', err.message);
-    if (err.response) {
-      console.error('Response data:', err.response.data);
-      console.error('Response status:', err.response.status);
-    }
+    console.error(`[fetchRecentMints] Invalid creator address: ${CREATOR} - ${err.message}`);
     return [];
   }
-}
 
-function findMintInAccounts(tx) {
-  const accounts = tx.transaction.message.accountKeys || [];
-  return accounts.find(acc => acc.signer === false && acc.writable && acc.pubkey !== PUMP_FUN_PROGRAM)?.pubkey;
+  const url = `https://rpc.helius.xyz/?api-key=${HELIUS_API_KEY}`;
+  let page = 1;
+  let allMints = [];
+
+  while (true) {
+    if (DEBUG) {
+      console.debug(`🔍 Fetching recent mints via getAssetsByCreator for ${CREATOR}, page ${page}`);
+    }
+
+    try {
+      const res = await axios.post(url, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getAssetsByCreator',
+        params: {
+          creatorAddress: CREATOR,
+          onlyVerified: false,
+          page,
+          limit: 10,
+        },
+      });
+
+      const items = res.data?.result?.items || [];
+      if (!items.length) {
+        break; // No more items
+      }
+
+      const mintAddresses = items
+        .map(asset => asset.id)
+        .filter(id => typeof id === 'string' && id.length === 44);
+
+      allMints = [...allMints, ...mintAddresses];
+
+      if (items.length < 10) {
+        break; // Less than limit, likely no more pages
+      }
+      page++;
+    } catch (err) {
+      const status = err.response?.status || 'Unknown';
+      const msg = err.response?.statusText || err.message;
+      const body = err.response?.data || 'No additional error details';
+      console.error(`[fetchRecentMints] Failed to fetch page ${page}: ${status} ${msg} - Details: ${JSON.stringify(body)}`);
+      break;
+    }
+  }
+
+  if (!allMints.length) {
+    console.warn(`⚠️ No tokens found for creator ${CREATOR}`);
+    return [];
+  }
+
+  console.log(`🎯 Found ${allMints.length} token mints`);
+  return allMints;
 }

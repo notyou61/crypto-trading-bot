@@ -1,15 +1,7 @@
+// index.js
 import dotenv from 'dotenv';
-import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { fetchRecentMints } from './utils/fetchRecentMints.js';
-import { getTokenPrice } from './utils/getTokenPrice.js';
-import { executeSwap } from './utils/executeSwap.js';
-import {
-  addToken,
-  getWaitingTokens,
-  markAsPriced,
-  incrementRetry,
-  expireOldTokens,
-} from './utils/trackedTokens.js';
+import { Connection, clusterApiUrl, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -19,78 +11,38 @@ dotenv.config();
 
 const TEST_MODE = process.env.TEST_MODE === 'true';
 const RPC_URL = TEST_MODE
-  ? process.env.RPC_ENDPOINT_DEVNET || 'https://api.devnet.solana.com'
-  : process.env.RPC_ENDPOINT_MAINNET || 'https://mainnet.helius-rpc.com/?api-key=82256758-538e-4d1a-a827-39d8a176c540';
+  ? clusterApiUrl('devnet')
+  : process.env.RPC_ENDPOINT_MAINNET;
 
 if (!RPC_URL) throw new Error('RPC endpoint not configured');
 
 const connection = new Connection(RPC_URL, 'confirmed');
-import bs58 from 'bs58';
-
-const wallet = Keypair.fromSecretKey(
-  bs58.decode(process.env.HOT_WALLET_PRIVATE_KEY)
-);
-const JUPITER_QUOTE_API = 'https://quote-api.jup.ag/v6/quote';
-const TRADE_SIZE_SOL = parseFloat(process.env.TRADE_SIZE) || 0.05; // 0.05 SOL
-const SLIPPAGE_BPS = (parseFloat(process.env.SLIPPAGE) * 10000) || 300; // 3% -> 300 bps
-const ENTRY_TRIGGER = parseFloat(process.env.ENTRY_TRIGGER) || 1.05; // 5% gain
-const TRACK_LIMIT = 10;
-const PRICE_RETRY_INTERVAL = 15000; // Retry every 15 seconds
-
-console.log(TEST_MODE
-  ? '🚧 Running in TEST MODE — no real trades will be executed.'
-  : '🚀 Running in LIVE MODE — executing real trades.');
 
 ///////////////////////////////////////
-// 🔁 MAIN LOOP
+// 🔐 LOAD DEVNET WALLET
 ///////////////////////////////////////
 
-async function mainLoop() {
-  let recentMints = [];
-  try {
-    recentMints = await fetchRecentMints();
-    recentMints.forEach(({ mint, symbol }) => addToken(mint, symbol || 'Unknown'));
-  } catch (err) {
-    console.error(`[${new Date().toISOString()}] fetchRecentMints failed: ${err.message}`);
-  }
-
-  const tokensToCheck = getWaitingTokens();
-  for (const token of tokensToCheck) {
-    if (new Date() - new Date(token.createdAt) < PRICE_RETRY_INTERVAL) {
-      continue; // Wait for liquidity
-    }
-
-    try {
-      const price = await getTokenPrice(token.mint, JUPITER_QUOTE_API, SLIPPAGE_BPS, TRADE_SIZE_SOL);
-      if (price !== null) {
-        console.log(`[${new Date().toISOString()}] 💰 ${token.mint} (${token.symbol}): $${price.toFixed(6)}`);
-        markAsPriced(token.mint, price);
-        // Check SNOWBALL strategy entry trigger
-        if (!token.initialPrice) {
-          token.initialPrice = price; // Set initial price
-        }
-        if (price >= token.initialPrice * ENTRY_TRIGGER) {
-          await executeSwap(
-            token.mint,
-            price,
-            TRADE_SIZE_SOL * LAMPORTS_PER_SOL,
-            SLIPPAGE_BPS,
-            wallet,
-            TEST_MODE,
-            connection
-          );
-        }
-      } else {
-        incrementRetry(token.mint);
-      }
-    } catch (err) {
-      console.error(`[${new Date().toISOString()}] Price fetch failed for ${token.mint} (${token.symbol}): ${err.message}`);
-      incrementRetry(token.mint);
-    }
-  }
-
-  expireOldTokens();
-  setTimeout(mainLoop, 5000); // Every 5 seconds
+let wallet;
+try {
+  const keyData = JSON.parse(fs.readFileSync('./wallets/devnet-wallet.json', 'utf8'));
+  wallet = Keypair.fromSecretKey(Uint8Array.from(keyData));
+  console.log('🔐 Devnet wallet loaded');
+} catch (err) {
+  console.error('❌ Failed to load devnet wallet:', err.message);
+  process.exit(1);
 }
 
-mainLoop();
+///////////////////////////////////////
+// 🚀 ENTRY POINT
+///////////////////////////////////////
+
+async function startBot() {
+  console.log(TEST_MODE
+    ? '🚧 Running in TEST MODE — no real trades will be executed.'
+    : '🚀 Running in LIVE MODE — real trades will be executed.');
+
+  // Placeholder: Load strategy, track tokens, etc.
+  console.log('🔁 Bot is initialized and ready to track tokens...');
+}
+
+startBot();

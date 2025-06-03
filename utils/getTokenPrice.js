@@ -4,7 +4,7 @@ import axios from 'axios';
 export async function getTokenPrice(mint, quoteApiUrl, slippageBps, inputAmountSol = 0.05) {
   try {
     const inputMint = 'So11111111111111111111111111111111111111112'; // SOL
-    const amount = Math.floor(inputAmountSol * 1e9); // Convert SOL to lamports
+    const amount = Math.floor(inputAmountSol * 1e9); // Convert to lamports
 
     const url = `${quoteApiUrl}?inputMint=${inputMint}&outputMint=${mint}&amount=${amount}&slippageBps=${slippageBps}`;
     const res = await axios.get(url);
@@ -13,10 +13,12 @@ export async function getTokenPrice(mint, quoteApiUrl, slippageBps, inputAmountS
     if (!route) return null;
 
     const outAmount = parseFloat(route.outAmount) / 1e9;
-    const priceUsd = parseFloat(route.priceImpactPct) ? (inputAmountSol / outAmount) : null;
+    if (!outAmount || outAmount === 0) return null;
 
-    return priceUsd || null;
+    const priceUsd = inputAmountSol / outAmount;
+    return priceUsd;
   } catch {
     return null;
   }
 }
+
