@@ -1,8 +1,9 @@
 // index.js
 import dotenv from 'dotenv';
 import { Connection, clusterApiUrl, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { loadWallet } from './utils/loadWallet.js';
 import fs from 'fs';
-
+// Load environment variables
 dotenv.config();
 
 ///////////////////////////////////////
@@ -22,15 +23,8 @@ const connection = new Connection(RPC_URL, 'confirmed');
 // 🔐 LOAD DEVNET WALLET
 ///////////////////////////////////////
 
-let wallet;
-try {
-  const keyData = JSON.parse(fs.readFileSync('./wallets/devnet-wallet.json', 'utf8'));
-  wallet = Keypair.fromSecretKey(Uint8Array.from(keyData));
-  console.log('🔐 Devnet wallet loaded');
-} catch (err) {
-  console.error('❌ Failed to load devnet wallet:', err.message);
-  process.exit(1);
-}
+const wallet = loadWallet(TEST_MODE);
+console.log(TEST_MODE ? '🔐 Devnet wallet loaded' : '🔐 Mainnet wallet loaded');
 
 ///////////////////////////////////////
 // 🚀 ENTRY POINT
@@ -44,5 +38,5 @@ async function startBot() {
   // Placeholder: Load strategy, track tokens, etc.
   console.log('🔁 Bot is initialized and ready to track tokens...');
 }
-
+// Start the bot
 startBot();
